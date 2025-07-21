@@ -1,7 +1,7 @@
 {
   "name": "Controle de Entregas",
   "short_name": "Entregas",
-  "start_url": "./index.html",
+  "start_url": "/controle-de-entregas/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
