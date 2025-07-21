@@ -668,18 +668,15 @@
         }
     </style>
     
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest">
     <meta name="theme-color" content="#DC3545">
     
     <script>
-        if ('serviceWorker' in navigator) {
-            // Certifique-se de que o caminho para service-worker.js está correto
-            // Se seu index.html está na raiz do domínio, use '/service-worker.js'
-            // Se está em um subdiretório como 'controle-de-entregas', use '/controle-de-entregas/service-worker.js'
-            navigator.serviceWorker.register('/controle-de-entregas/service-worker.js')
-                .then(() => console.log("Service Worker registrado com sucesso."))
-                .catch(err => console.error("Erro ao registrar Service Worker:", err));
-        }
+ if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js') // com ./ no começo!
+    .then(() => console.log("Service Worker registrado com sucesso."))
+    .catch(err => console.error("Erro ao registrar Service Worker:", err));
+}
 
         let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
         let historico = JSON.parse(localStorage.getItem("historico") || "[]");
