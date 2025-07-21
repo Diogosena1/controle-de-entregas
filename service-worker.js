@@ -1,24 +1,24 @@
-const CACHE_NAME = 'controle-entregas-cache-v1';
-const urlsToCache = [
-  './', // raiz
-  './fretes.html',
-  './manifest.json',
-  './script.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+self.addEventListener('install', function(e) {
+  console.log('Service Worker instalado');
+  e.waitUntil(
+    caches.open('app-cache').then(function(cache) {
+      return cache.addAll([
+        './',
+        './index.html',
+        './manifest.json',
+        './style.css',
+        './script.js',
+        './icons/icon-192.png',
+        './icons/icon-512.png'
+      ]);
+    })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+self.addEventListener('fetch', function(e) {
+  e.respondWith(
+    caches.match(e.request).then(function(response) {
+      return response || fetch(e.request);
     })
   );
 });
