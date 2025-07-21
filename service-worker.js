@@ -1,4 +1,4 @@
-const CACHE_NAME = 'controle-entregas-cache-v3'; // ATENÇÃO: Mude 'v1' para 'v2', 'v3', etc., a cada nova versão do seu app!
+const CACHE_NAME = 'controle-entregas-cache-v4'; // ATENÇÃO: Mude 'v1' para 'v2', 'v3', etc., a cada nova versão do seu app!
 const urlsToCache = [
   '/controle-de-entregas/', // Se o index.html for o padrão da pasta
   '/controle-de-entregas/index.html',
@@ -8,8 +8,8 @@ const urlsToCache = [
   // Se você separar seu JS do HTML, o arquivo .js iria aqui:
   // '/controle-de-entregas/script.js', 
   '/controle-de-entregas/manifest.json',
-  '/controle-de-entregas/icons/icon-192.png',
-  '/controle-de-entregas/icons/icon-512.png'
+  '/controle-de-entregas/icons/icon-192.png', 
+    '/controle-de-entregas/icons/icon-512.png'
   // Adicione outros arquivos importantes, como imagens, fontes, etc.
 ];
 
