@@ -10,7 +10,7 @@ const urlsToCache = [
   '/controle-de-entregas/manifest.json',
   '/controle-de-entregas/icons/icon-192.png', 
     '/controle-de-entregas/icons/icon-512.png'
-  // Adicione outros arquivos importantes, como imagens, fontes, etc.
+  // Adicione outros arquivos importantes, como imagens, fontes, etc
 ];
 
 // Evento de Instalação: Ocorre quando o Service Worker é registrado pela primeira vez ou quando uma nova versão é detectada.
