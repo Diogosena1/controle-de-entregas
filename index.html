@@ -538,10 +538,9 @@
           const newWorker = registration.installing;
 
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed') {
-              if (navigator.serviceWorker.controller) {
-                alert('Nova versão disponível! Recarregue a página para atualizar o app.');
-              }
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('Nova versão disponível. Recarregando...');
+              window.location.reload(); // Recarrega o app automaticamente
             }
           });
         });
@@ -549,6 +548,7 @@
       .catch(err => console.error('Erro ao registrar Service Worker:', err));
   }
 </script>
+
 
 
 
