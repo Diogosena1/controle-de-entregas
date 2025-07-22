@@ -1,7 +1,7 @@
 self.addEventListener('install', function(e) {
   console.log('Service Worker instalado');
   e.waitUntil(
-    caches.open('app-cache').then(function(cache) {
+    caches.open('app-cache-v2').then(function(cache) {
       return cache.addAll([
         '/controle-de-entregas/',
         '/controle-de-entregas/index.html',
@@ -19,6 +19,20 @@ self.addEventListener('fetch', function(e) {
   e.respondWith(
     caches.match(e.request).then(function(response) {
       return response || fetch(e.request);
+    })
+  );
+});
+
+self.addEventListener('activate', function(e) {
+  e.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cache) {
+          if (cache !== 'app-cache-v2') {
+            return caches.delete(cache);
+          }
+        })
+      );
     })
   );
 });
