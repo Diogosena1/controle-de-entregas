@@ -1,4 +1,4 @@
-const CACHE_NAME = 'controle-entregas-cache-v6'; // <--- INCREMENTE PARA V6! Sempre que mudar o SW, incremente.
+const CACHE_NAME = 'controle-entregas-cache-v7'; // <--- INCREMENTE PARA V6! Sempre que mudar o SW, incremente.
 const urlsToCache = [
     '/controle-de-entregas/', // O caminho raiz do seu aplicativo no GitHub Pages
     '/controle-de-entregas/index.html',
