@@ -3,16 +3,16 @@
   "short_name": "Entregas",
   "start_url": "/controle-de-entregas/index.html",
   "display": "standalone",
-  "background_color": "#FFFFFF",  // Branco puro
-  "theme_color": "#DC3545",      // Vermelho vibrante (Bootstrap 'danger' color, um bom tom de vermelho)
+  "background_color": "#FFFFFF",  
+  "theme_color": "#DC3545",      
   "icons": [
     {
-      "src": "icons/icon-192.png",  // Certifique-se que o logo vermelho está aqui
+      "src": "icons/icon-192.png",  
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",  // Certifique-se que o logo vermelho está aqui
+      "src": "icons/icon-512.png",  
       "sizes": "512x512",
       "type": "image/png"
     }
