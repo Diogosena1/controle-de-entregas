@@ -3,13 +3,13 @@ self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open('app-cache').then(function(cache) {
       return cache.addAll([
-        './',
-        './index.html',
-        './manifest.json',
-        './style.css',
-        './script.js',
-        './icons/icon-192.png',
-        './icons/icon-512.png'
+        '/controle-de-entregas/',
+        '/controle-de-entregas/index.html',
+        '/controle-de-entregas/manifest.json',
+        '/controle-de-entregas/style.css',
+        '/controle-de-entregas/script.js',
+        '/controle-de-entregas/icons/icon-192.png',
+        '/controle-de-entregas/icons/icon-512.png'
       ]);
     })
   );
