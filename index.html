@@ -12,60 +12,178 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #eaeff5;
+            background: #f8f8f8; /* Fundo branco/cinza claro */
             margin: 0;
-            padding: 20px;
-            color: #333;
             min-height: 100vh;
+            overflow-x: hidden; /* Evita rolagem horizontal devido ao menu */
+        }
+
+        .app-container {
+            padding: 20px; /* Adicionando padding ao container principal do conteúdo */
+            position: relative; /* Para z-index se o overlay estiver sobre ele */
+            z-index: 0; /* Por padrão, abaixo do overlay quando aberto */
+        }
+
+        /* --- Novo Estilo para o Cabeçalho com Hambúrguer --- */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Alinha o logo e o hambúrguer à esquerda */
+            margin-bottom: 20px;
+            padding: 0 20px;
+            position: relative;
+            background-color: white; /* Cor de fundo para o cabeçalho */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: 60px; /* Altura fixa do cabeçalho */
+            z-index: 3; /* Garante que o cabeçalho fique acima de tudo */
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2; /* Garante que fique acima do menu */
+            display: flex; /* Para centralizar os ícones */
+            flex-direction: column;
+            justify-content: space-between;
+            height: 30px; /* Altura do ícone hambúrguer */
+        }
+
+        .hamburger-icon {
+            width: 30px;
+            height: 2px;
+            background-color: #DC3545; /* Cor do hambúrguer */
+            display: block;
+            transition: 0.3s;
+            border-radius: 1px;
+        }
+
+        .hamburger-btn.open .hamburger-icon:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .hamburger-btn.open .hamburger-icon:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.open .hamburger-icon:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .logo-link {
+            margin-left: 20px; /* Espaçamento entre o hambúrguer e o logo */
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-link img {
+            height: 40px;
+            width: auto;
+            border-radius: 5px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
             font-weight: 700;
-            color: #222;
+            color: #DC3545;
             text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            margin: 0;
+            flex-grow: 1;
+            position: absolute; /* Posiciona o título no centro */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap; /* Evita quebra de linha em telas menores */
         }
 
-        /* Container geral para as abas */
-        .tabs {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+        /* Menu de Navegação */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #f8f8f8; /* Fundo do menu */
+            border-right: 1px solid #ccc;
+            padding-top: 60px; /* Espaço para o cabeçalho, altura do cabeçalho */
+            transform: translateX(-250px); /* Oculta o menu inicialmente */
+            transition: transform 0.3s ease-in-out;
+            z-index: 2; /* Acima do conteúdo, abaixo do cabeçalho */
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            display: flex; /* Para alinhar o conteúdo */
+            flex-direction: column;
         }
 
-        .tabs button {
-            background-color: #4972ff;
+        .main-nav.open {
+            transform: translateX(0); /* Mostra o menu */
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Permite que a lista de botões ocupe o espaço */
+        }
+
+        .nav-list li {
+            padding: 0;
+            margin-bottom: 5px; /* Espaçamento entre os itens do menu */
+        }
+
+        .nav-list li:first-child {
+            margin-top: 10px; /* Espaço após o cabeçalho no menu */
+        }
+
+        .nav-list li button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            text-align: left;
+            background-color: #DC3545; /* Vermelho principal */
             border: none;
             color: white;
-            padding: 10px 18px;
             font-weight: 600;
-            border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 4px 7px rgba(73,114,255,0.4);
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            flex-shrink: 0; /* Impede que os botões encolham muito */
-            font-size: 1em; /* Ajusta o tamanho da fonte para mobile */
+            transition: background-color 0.3s ease;
+            border-radius: 0; /* Remove bordas arredondadas do botão no menu */
+            box-shadow: none; /* Remove sombra dos botões do menu */
         }
 
-        .tabs button:hover,
-        .tabs button:focus {
-            background-color: #2a51d0;
-            box-shadow: 0 6px 10px rgba(42,81,208,0.7);
+        .nav-list li button:hover,
+        .nav-list li button:focus {
+            background-color: #C82333; /* Vermelho mais escuro no hover */
             outline: none;
         }
 
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fundo escuro semi-transparente */
+            z-index: 1; /* Abaixo do menu e cabeçalho */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- Resto do seu CSS (mantido com algumas adaptações) --- */
         .hidden {
             display: none;
         }
 
         /* Card para seções */
-        #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
+        #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros {
             background: white;
             max-width: 1100px;
-            margin: 0 auto 40px;
+            margin: 20px auto 40px; /* Margem superior para separar do cabeçalho */
             padding: 25px 30px;
             border-radius: 12px;
             box-shadow: 0 5px 18px rgba(0,0,0,0.08);
@@ -75,7 +193,7 @@
         h2 {
             text-align: center;
             margin-bottom: 20px;
-            color: #1a237e;
+            color: #B22222;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -86,8 +204,8 @@
         input[type="number"],
         input[type="date"],
         select {
-            width: 100%; /* Largura total dentro do container */
-            max-width: 220px; /* Limita a largura em telas maiores */
+            width: 100%;
+            max-width: 220px;
             padding: 8px 12px;
             margin: 6px 10px 12px 0;
             border: 1.8px solid #bbb;
@@ -102,9 +220,9 @@
         input[type="number"]:focus,
         input[type="date"]:focus,
         select:focus {
-            border-color: #4972ff;
+            border-color: #DC3545;
             outline: none;
-            box-shadow: 0 0 6px #8ea6ffaa;
+            box-shadow: 0 0 6px rgba(220,53,69,0.4);
         }
 
         label {
@@ -112,7 +230,7 @@
             color: #555;
             user-select: none;
             margin-right: 10px;
-            white-space: nowrap; /* Impede que a label "Pago:" quebre linha desnecessariamente */
+            white-space: nowrap;
         }
 
         label > input[type="checkbox"] {
@@ -121,9 +239,9 @@
             cursor: pointer;
         }
 
-        /* Botões principais */
+        /* Botões principais (dentro das seções) */
         button {
-            background-color: #4972ff;
+            background-color: #DC3545;
             color: white;
             border: none;
             padding: 10px 18px;
@@ -132,13 +250,13 @@
             cursor: pointer;
             margin-top: 10px;
             transition: background-color 0.3s ease;
-            box-shadow: 0 3px 8px rgba(73,114,255,0.5);
+            box-shadow: 0 3px 8px rgba(220,53,69,0.5);
             user-select: none;
         }
 
         button:hover,
         button:focus {
-            background-color: #2a51d0;
+            background-color: #C82333;
             outline: none;
         }
 
@@ -147,7 +265,7 @@
             padding: 5px 8px;
             font-size: 13px;
             margin: 0 3px;
-            box-shadow: 0 2px 5px rgba(73,114,255,0.4);
+            box-shadow: 0 2px 5px rgba(220,53,69,0.4);
         }
 
         /* Tabela */
@@ -156,13 +274,13 @@
             border-collapse: collapse;
             margin-top: 18px;
             font-size: 14px;
-            display: block; /* Permite scroll horizontal */
-            overflow-x: auto; /* Adiciona scroll horizontal se a tabela for muito larga */
-            white-space: nowrap; /* Impede que o conteúdo da célula quebre linha */
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
         }
 
         thead {
-            background-color: #4972ff;
+            background-color: #DC3545;
             color: white;
             user-select: none;
         }
@@ -170,7 +288,7 @@
         thead th {
             padding: 12px 10px;
             font-weight: 700;
-            border-right: 1px solid #3d60d1;
+            border-right: 1px solid #C82333;
         }
 
         thead th:last-child {
@@ -178,11 +296,11 @@
         }
 
         tbody tr:nth-child(even) {
-            background-color: #f7f9ff;
+            background-color: #fff2f2;
         }
 
         tbody tr:hover {
-            background-color: #dde5ff;
+            background-color: #ffe0e0;
             cursor: default;
         }
 
@@ -208,9 +326,9 @@
         tbody input[type="text"]:focus,
         tbody input[type="number"]:focus,
         tbody select:focus {
-            border-color: #4972ff;
+            border-color: #DC3545;
             outline: none;
-            box-shadow: 0 0 5px #7b94ffcc;
+            box-shadow: 0 0 5px rgba(220,53,69,0.4);
         }
 
         tbody input[type="checkbox"] {
@@ -224,41 +342,40 @@
             color: #999;
         }
 
-        /* Container filtro registros (ATUALIZADO) */
-        #registros > .filtro-container { /* Adicionando uma classe para o div de filtro */
+        /* Container filtro registros */
+        #registros > .filtro-container {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 15px; /* Aumentado o gap para melhor espaçamento */
-            margin-bottom: 25px; /* Ajuste na margem inferior */
+            gap: 15px;
+            margin-bottom: 25px;
             justify-content: center;
         }
 
-        #registros .filtro-item { /* Novo estilo para cada item de filtro (label + input) */
+        #registros .filtro-item {
             display: flex;
             align-items: center;
-            gap: 5px; /* Espaçamento entre a label e o input dentro do item */
+            gap: 5px;
         }
 
         #registros .filtro-item input[type="date"] {
-            max-width: 150px; /* Limita um pouco a largura do input de data */
-            margin: 0; /* Remove margens extras que podem estar empurrando */
-            padding: 6px 10px; /* Ajusta padding */
+            max-width: 150px;
+            margin: 0;
+            padding: 6px 10px;
             font-size: 14px;
         }
         
-        #registros > .botoes-historico-container { /* Adicionando uma classe para o div dos botões de histórico */
+        #registros > .botoes-historico-container {
             display: flex;
             justify-content: center;
-            gap: 10px; /* Espaçamento entre os botões */
+            gap: 10px;
             margin-bottom: 20px;
-            flex-wrap: wrap; /* Para quebrar a linha em telas pequenas */
+            flex-wrap: wrap;
         }
 
         #registros .botoes-historico-container button {
-            margin-top: 0; /* Garante que não haja margem extra em cima */
+            margin-top: 0;
         }
-
 
         /* Estilos para Caixa e Gasolina */
         .caixa-gasolina-container {
@@ -267,16 +384,16 @@
             gap: 20px;
             margin-top: 20px;
             margin-bottom: 30px;
-            flex-wrap: wrap; /* Permite que os cards quebrem a linha */
+            flex-wrap: wrap;
         }
 
         .info-card {
-            flex: 1; /* Permite que os cards se expandam */
+            flex: 1;
             padding: 15px;
             border: 1px solid #ccc;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            min-width: 280px; /* Garante um tamanho mínimo para não ficar muito pequeno */
+            min-width: 280px;
             background: #fdfdfd;
             display: flex;
             flex-direction: column;
@@ -284,11 +401,11 @@
         }
 
         .info-card.caixa {
-            background: #eaf8e8;
+            background: #ffe6e6; /* Vermelho claro para caixa */
         }
 
         .info-card.gasolina {
-            background: #fbeaea;
+            background: #ffe6e6; /* Vermelho claro para gasolina */
         }
 
         .info-card h3 {
@@ -307,7 +424,7 @@
 
         .info-card input[type="number"],
         .info-card input[type="date"] {
-            max-width: 100%; /* Ocupa 100% da largura do card */
+            max-width: 100%;
             margin: 5px 0;
         }
 
@@ -330,11 +447,11 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap; /* Permite que o texto e o botão quebrem a linha */
+            flex-wrap: wrap;
         }
 
         .resumo-extra p strong {
-            color: #1a237e;
+            color: #B22222; /* Vermelho mais escuro para valores fortes */
         }
 
         .resumo-extra button {
@@ -350,13 +467,13 @@
             padding: 15px;
             border: 1px solid #eee;
             border-radius: 8px;
-            background-color: #f9f9f9;
+            background-color: #fff5f5; /* Fundo levemente avermelhado para detalhes */
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .detalhes-container h4 {
             margin-top: 0;
-            color: #4972ff;
+            color: #DC3545; /* Vermelho para títulos de detalhes */
             font-size: 1.2em;
             margin-bottom: 10px;
         }
@@ -389,42 +506,61 @@
         }
         .detalhes-container li .valor {
             font-weight: 700;
-            color: #1a237e;
+            color: #B22222; /* Vermelho mais escuro para valores */
         }
 
         /* RESPONSIVIDADE - MEDIA QUERIES */
-        @media(max-width: 768px) { /* Ajustado para 768px para ser mais abrangente */
-            body {
-                padding: 10px;
+        @media(max-width: 768px) {
+            .app-container {
+                padding: 10px; /* Reduz padding para telas menores */
+            }
+
+            .app-header {
+                justify-content: flex-start; /* Alinha à esquerda em telas menores também */
+                padding: 0 10px;
             }
 
             h1 {
                 font-size: 1.8em;
+                left: auto; /* Remove posicionamento absoluto para o h1 */
+                transform: none; /* Remove transformação */
+                text-align: left; /* Alinha o título à esquerda em telas menores */
+                margin-left: 10px; /* Espaçamento do logo */
+                position: relative; /* Volta para posicionamento relativo */
             }
 
-            .tabs button {
-                padding: 8px 15px;
+            .logo-link {
+                margin-left: 10px; /* Ajusta espaçamento do logo */
+            }
+
+            .main-nav {
+                width: 200px;
+                transform: translateX(-200px);
+            }
+
+            .nav-list li button {
+                padding: 10px 15px;
                 font-size: 0.95em;
             }
 
-            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
+            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros {
                 padding: 15px;
                 margin-bottom: 20px;
             }
 
             /* Inputs do formulário principal */
             #principal > div {
-                flex-direction: column; /* Empilha os inputs */
-                align-items: center; /* Centraliza os itens empilhados */
-                gap: 8px; /* Reduz o espaçamento */
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
             }
 
             input[type="text"],
             input[type="number"],
             input[type="date"],
             select {
-                max-width: 95%; /* Ocupa mais largura em telas menores */
-                margin: 5px 0; /* Ajusta a margem */
+                max-width: 95%;
+                margin: 5px 0;
             }
 
             label {
@@ -433,89 +569,97 @@
             }
             
             button {
-                width: 100%; /* Botões principais ocupam toda a largura */
-                max-width: 300px; /* Limita a largura para não ficarem muito grandes */
+                width: 100%;
+                max-width: 300px;
                 margin-top: 15px;
             }
 
             button.small {
-                width: auto; /* Botões pequenos voltam a ser auto-largura */
+                width: auto;
                 max-width: none;
                 margin: 5px;
             }
 
             /* Container de Caixa e Gasolina */
             .caixa-gasolina-container {
-                flex-direction: column; /* Empilha os cards */
-                gap: 15px; /* Ajusta o espaçamento */
+                flex-direction: column;
+                gap: 15px;
             }
 
             .info-card {
-                min-width: unset; /* Remove o min-width para que ele se adapte melhor */
-                width: 100%; /* Ocupa a largura total do container */
-                max-width: 400px; /* Limita a largura em telas muito pequenas */
+                min-width: unset;
+                width: 100%;
+                max-width: 400px;
             }
             
             /* Ajusta tabelas para mobile */
             table {
-                font-size: 13px; /* Fonte um pouco menor para economizar espaço */
+                font-size: 13px;
             }
             thead th, tbody td {
-                padding: 8px 5px; /* Menor padding */
+                padding: 8px 5px;
             }
 
             tbody input[type="text"],
             tbody input[type="number"],
             tbody select {
-                width: 90%; /* Ajusta inputs dentro da tabela */
+                width: 90%;
                 font-size: 13px;
                 padding: 5px;
             }
 
             .resumo-extra p {
-                flex-direction: column; /* Empilha texto e botão de detalhes */
+                flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
             }
 
-            /* RESPONSIVIDADE PARA REGISTROS (ATUALIZADO) */
+            /* RESPONSIVIDADE PARA REGISTROS */
             #registros .filtro-item {
-                flex-direction: column; /* Empilha label e input em telas menores */
-                align-items: flex-start; /* Alinha labels à esquerda */
-                gap: 2px; /* Reduz gap ao empilhar */
-                width: 100%; /* Ocupa largura total */
-                max-width: 250px; /* Limita a largura para cada item do filtro */
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+                width: 100%;
+                max-width: 250px;
             }
 
             #registros .filtro-item input[type="date"] {
-                max-width: 100%; /* Ocupa 100% da largura do filtro-item */
+                max-width: 100%;
             }
 
             #registros > .filtro-container {
-                flex-direction: column; /* Empilha todo o container do filtro */
-                gap: 15px; /* Ajusta o gap entre os itens empilhados */
+                flex-direction: column;
+                gap: 15px;
             }
 
             #registros > .botoes-historico-container {
-                flex-direction: column; /* Empilha os botões em telas menores */
-                gap: 10px; /* Ajusta o espaçamento */
-                align-items: center; /* Centraliza os botões empilhados */
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
             }
             #registros .botoes-historico-container button {
-                width: 90%; /* Ajusta largura dos botões empilhados */
+                width: 90%;
                 max-width: 250px;
             }
         }
 
-        @media(max-width: 480px) { /* Ajustes para telas ainda menores, como iPhones SE */
+        @media(max-width: 480px) {
             h1 {
                 font-size: 1.5em;
+                margin-left: 10px;
             }
-            .tabs button {
+            .logo-link {
+                margin-left: 5px;
+            }
+            .main-nav {
+                width: 180px;
+                transform: translateX(-180px);
+            }
+            .nav-list li button {
                 font-size: 0.85em;
-                padding: 7px 12px;
+                padding: 10px 12px;
             }
-            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
+            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros {
                 padding: 10px;
             }
             h2 {
@@ -523,804 +667,838 @@
             }
         }
     </style>
+    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#DC3545">
+    
     <script>
         if ('serviceWorker' in navigator) {
+            // Certifique-se de que o caminho para service-worker.js está correto
+            // Se seu index.html está na raiz do domínio, use '/service-worker.js'
+            // Se está em um subdiretório como 'controle-de-entregas', use '/controle-de-entregas/service-worker.js'
             navigator.serviceWorker.register('/controle-de-entregas/service-worker.js')
                 .then(() => console.log("Service Worker registrado com sucesso."))
                 .catch(err => console.error("Erro ao registrar Service Worker:", err));
         }
-    </script>
-</head>
-<body>
 
-<h1>Controle de Entregas</h1>
+        let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
+        let historico = JSON.parse(localStorage.getItem("historico") || "[]");
+        let historicoFiltradoAtual = [];
 
-<div class="tabs" role="tablist" aria-label="Navegação de páginas">
-    <button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button>
-    <button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button>
-    <button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button>
-    <button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button> <button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button>
-    <button onclick="showPage('registros')" aria-controls="registros" role="tab">Registros</button>
-</div>
-
-<div id="principal" role="tabpanel" tabindex="0">
-    <div style="display:flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 10px;">
-        <input type="text" id="nome" placeholder="Nome" aria-label="Nome" />
-        <input type="text" id="telefone" placeholder="Telefone" aria-label="Telefone" />
-        <input type="text" id="descricao" placeholder="Descrição" aria-label="Descrição" />
-        <input type="number" id="valor" placeholder="Valor (R$)" min="0" step="0.01" aria-label="Valor" />
-        <select id="pagamento" aria-label="Forma de pagamento">
-            <option value="">Forma de pagamento</option>
-            <option>PGA</option>
-            <option>PGR</option>
-            <option>PIX</option>
-        </select>
-        <label for="pago" style="align-self: center;">Pago: <input type="checkbox" id="pago" aria-label="Pago" /></label>
-        <button onclick="adicionarEntrega()" aria-label="Adicionar entrega">Adicionar</button>
-        <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Semana</button>
-    </div>
-
-    <table aria-describedby="Tabela de entregas principal">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Pagamento</th>
-                <th>Pago</th>
-                <th>Coletado</th> <th>Data</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-principal"></tbody>
-    </table>
-</div>
-
-<div id="pagos" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Clientes Pagos</h2>
-    <table aria-describedby="Tabela de clientes pagos">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Pagamento</th>
-                <th>Pago</th>
-                <th>Data</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-pagos"></tbody>
-    </table>
-</div>
-
-<div id="naoPagos" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Clientes Não Pagos</h2>
-    <table aria-describedby="Tabela de clientes não pagos">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Pago</th>
-                <th>Data</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-naoPagos"></tbody>
-    </table>
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
-        <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
-    </div>
-</div>
-
-<div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Mercadorias Não Coletadas</h2>
-    <table aria-describedby="Tabela de mercadorias não coletadas">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Data</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-naoColetados"></tbody>
-    </table>
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="enviarMensagemNaoColetadosGeral()">Enviar Mensagem Geral (WhatsApp)</button>
-        <p>Telefones dos clientes com mercadorias não coletadas (para envio em massa): <span id="listaTelefonesNaoColetados"></span></p>
-    </div>
-</div>
-<div id="caixa" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Resumo da Semana</h2>
-    <p>Total Bruto: <strong>R$ <span id="totalBruto"></span></strong></p>
-    <p>Emergenciais (R$10,00 por coleta): <strong>R$ <span id="emergencialTotal"></span></strong></p>
-    <p>Subtotal (com taxa emergencial): <strong>R$ <span id="subtotal"></span></strong></p>
-    <p>Comissão (22%): <strong>R$ <span id="comissao"></span></strong></p>
-
-    <div class="resumo-extra">
-        <p>Total Caixa (troco): <strong id="caixaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('caixa')">+ Detalhes</button></p>
-        <div id="detalhesCaixa" class="detalhes-container hidden">
-            <h4>Detalhes do Caixa (troco)</h4>
-            <ul id="listaDetalhesCaixa"></ul>
-        </div>
-
-        <p>Total Gasolina: <strong id="gasolinaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('gasolina')">+ Detalhes</button></p>
-        <div id="detalhesGasolina" class="detalhes-container hidden">
-            <h4>Detalhes da Gasolina</h4>
-            <ul id="listaDetalhesGasolina"></ul>
-        </div>
-    </div>
-
-    <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
-
-    <div class="caixa-gasolina-container">
-        <div class="info-card caixa">
-            <h3>💰 Lançar Caixa (troco)</h3>
-            <input type="number" id="inputCaixaValor" placeholder="Valor (R$)" min="0" step="0.01">
-            <input type="date" id="inputCaixaData">
-            <button onclick="salvarCaixa()">Salvar Caixa</button>
-        </div>
-
-        <div class="info-card gasolina">
-            <h3>⛽ Lançar Gasolina</h3>
-            <input type="number" id="inputGasolinaValor" placeholder="Valor (R$)" min="0" step="0.01">
-            <input type="date" id="inputGasolinaData">
-            <button onclick="salvarGasolina()">Salvar Gasolina</button>
-        </div>
-    </div>
-</div>
-
-<div id="registros" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Histórico de Registros</h2>
-    <div class="filtro-container">
-        <label for="filtroDataInicio" class="filtro-item">
-            <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
-        </label>
-        <label for="filtroDataFim" class="filtro-item">
-            <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
-        </label>
-        <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
-    </div>
-    
-    <div class="botoes-historico-container">
-        <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
-        <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
-        <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
-    </div>
-    
-    <div id="historico"></div>
-</div>
-
-<script>
-    let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
-    let historico = JSON.parse(localStorage.getItem("historico") || "[]");
-    let historicoFiltradoAtual = []; // Guarda o filtro atual para apagar filtrados
-
-    let caixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
-    if (!Array.isArray(caixaTroco)) {
-        caixaTroco = [];
-    }
-
-    let gasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
-    if (!Array.isArray(gasolinaValor)) {
-        gasolinaValor = [];
-    }
-
-    function salvarCaixa() {
-        const valor = parseFloat(document.getElementById('inputCaixaValor').value);
-        const data = document.getElementById('inputCaixaData').value;
-
-        if (isNaN(valor) || valor <= 0) {
-            alert("Por favor, insira um valor numérico positivo para o caixa.");
-            return;
-        }
-        if (!data) {
-            alert("Por favor, selecione uma data para o caixa.");
-            return;
+        let caixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
+        if (!Array.isArray(caixaTroco)) {
+            caixaTroco = [];
         }
 
-        caixaTroco.push({ valor, data });
-        localStorage.setItem('caixaTroco', JSON.stringify(caixaTroco));
-        atualizarCaixaGasolina(); // Atualiza a exibição e os inputs
-        alert(`Valor do caixa salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
-        // Limpa os campos após salvar
-        document.getElementById('inputCaixaValor').value = '';
-        document.getElementById('inputCaixaData').value = '';
-    }
-
-    function salvarGasolina() {
-        const valor = parseFloat(document.getElementById('inputGasolinaValor').value);
-        const data = document.getElementById('inputGasolinaData').value;
-
-        if (isNaN(valor) || valor <= 0) {
-            alert("Por favor, insira um valor numérico positivo para a gasolina.");
-            return;
-        }
-        if (!data) {
-            alert("Por favor, selecione uma data para a gasolina.");
-            return;
+        let gasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
+        if (!Array.isArray(gasolinaValor)) {
+            gasolinaValor = [];
         }
 
-        gasolinaValor.push({ valor, data });
-        localStorage.setItem('gasolinaValor', JSON.stringify(gasolinaValor));
-        atualizarCaixaGasolina(); // Atualiza a exibição e os inputs
-        alert(`Valor da gasolina salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
-        // Limpa os campos após salvar
-        document.getElementById('inputGasolinaValor').value = '';
-        document.getElementById('inputGasolinaData').value = '';
-    }
+        function salvarCaixa() {
+            const valor = parseFloat(document.getElementById('inputCaixaValor').value);
+            const data = document.getElementById('inputCaixaData').value;
 
-    function formatarDataParaExibicao(dataIso) {
-        if (!dataIso) return '-';
-        const [ano, mes, dia] = dataIso.split('-');
-        return `${dia}/${mes}/${ano}`;
-    }
+            if (isNaN(valor) || valor <= 0) {
+                alert("Por favor, insira um valor numérico positivo para o caixa.");
+                return;
+            }
+            if (!data) {
+                alert("Por favor, selecione uma data para o caixa.");
+                return;
+            }
 
-    function calcularTotal(arr) {
-        if (!Array.isArray(arr)) {
-            return 0;
-        }
-        return arr.reduce((acc, item) => acc + item.valor, 0);
-    }
-
-    function atualizarCaixaGasolina() {
-        let tempCaixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
-        caixaTroco = Array.isArray(tempCaixaTroco) ? tempCaixaTroco : [];
-
-        let tempGasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
-        gasolinaValor = Array.isArray(tempGasolinaValor) ? tempGasolinaValor : [];
-
-        document.getElementById('caixaResumoTotal').innerHTML = `R$ ${calcularTotal(caixaTroco).toFixed(2)}`;
-        document.getElementById('gasolinaResumoTotal').innerHTML = `R$ ${calcularTotal(gasolinaValor).toFixed(2)}`;
-    
-        document.getElementById('inputCaixaValor').value = '';
-        document.getElementById('inputCaixaData').value = '';
-        document.getElementById('inputGasolinaValor').value = '';
-        document.getElementById('inputGasolinaData').value = '';
-
-        renderizarDetalhes('caixa');
-        renderizarDetalhes('gasolina');
-    }
-
-    function toggleDetalhes(tipo) {
-        const detalhesDiv = document.getElementById(`detalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
-        detalhesDiv.classList.toggle('hidden');
-        renderizarDetalhes(tipo);
-    }
-
-    function renderizarDetalhes(tipo) {
-        const listaUl = document.getElementById(`listaDetalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
-        listaUl.innerHTML = '';
-        const dados = tipo === 'caixa' ? caixaTroco : gasolinaValor;
-
-        if (!Array.isArray(dados)) {
-            listaUl.innerHTML = '<li>Erro: Dados de lançamento não são válidos.</li>';
-            return;
-        }
-
-        if (dados.length === 0) {
-            listaUl.innerHTML = '<li>Nenhum lançamento registrado para esta semana.</li>';
-            return;
-        }
-
-        dados.forEach(item => {
-            listaUl.innerHTML += `
-                <li>
-                    <span>${formatarDataParaExibicao(item.data)}</span>
-                    <span class="valor">R$ ${item.valor.toFixed(2)}</span>
-                </li>
-            `;
-        });
-    }
-
-    function showPage(id) {
-        ["principal", "pagos", "naoPagos", "naoColetados", "caixa", "registros"].forEach(p => { // Adicionado "naoColetados"
-            document.getElementById(p).classList.add("hidden");
-        });
-        document.getElementById(id).classList.remove("hidden");
-        if (id === "caixa") {
-            calcularCaixa();
+            caixaTroco.push({ valor, data });
+            localStorage.setItem('caixaTroco', JSON.stringify(caixaTroco));
             atualizarCaixaGasolina();
-        } else {
-            document.getElementById('detalhesCaixa').classList.add('hidden');
-            document.getElementById('detalhesGasolina').classList.add('hidden');
+            alert(`Valor do caixa salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
+            document.getElementById('inputCaixaValor').value = '';
+            document.getElementById('inputCaixaData').value = '';
         }
-        if (id === "registros") {
-            document.getElementById("filtroDataInicio").value = "";
-            document.getElementById("filtroDataFim").value = "";
-            aplicarFiltroHistorico();
+
+        function salvarGasolina() {
+            const valor = parseFloat(document.getElementById('inputGasolinaValor').value);
+            const data = document.getElementById('inputGasolinaData').value;
+
+            if (isNaN(valor) || valor <= 0) {
+                alert("Por favor, insira um valor numérico positivo para a gasolina.");
+                return;
+            }
+            if (!data) {
+                alert("Por favor, selecione uma data para a gasolina.");
+                return;
+            }
+
+            gasolinaValor.push({ valor, data });
+            localStorage.setItem('gasolinaValor', JSON.stringify(gasolinaValor));
+            atualizarCaixaGasolina();
+            alert(`Valor da gasolina salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
+            document.getElementById('inputGasolinaValor').value = '';
+            document.getElementById('inputGasolinaData').value = '';
         }
-        if (id === "pagos" || id === "naoPagos") renderizarPagos(); // renderizarPagos já cuida dos pagos e naoPagos
-        if (id === "naoColetados") renderizarNaoColetados(); // Chamada para a nova função
-        if (id === "principal") renderizar(); // Mantido para garantir que a principal seja sempre atualizada
-    }
-    
-    function adicionarEntrega() {
-        const nome = document.getElementById("nome").value.trim();
-        const telefone = document.getElementById("telefone").value.trim();
-        const descricao = document.getElementById("descricao").value.trim();
-        const valor = parseFloat(document.getElementById("valor").value);
-        const pagamento = document.getElementById("pagamento").value;
-        const pago = document.getElementById("pago").checked;
-        const formaPagamento = pago ? pagamento : "";
-        const dataAtual = new Date();
+
+        function formatarDataParaExibicao(dataIso) {
+            if (!dataIso) return '-';
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        function calcularTotal(arr) {
+            if (!Array.isArray(arr)) {
+                return 0;
+            }
+            return arr.reduce((acc, item) => acc + item.valor, 0);
+        }
+
+        function atualizarCaixaGasolina() {
+            let tempCaixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
+            caixaTroco = Array.isArray(tempCaixaTroco) ? tempCaixaTroco : [];
+
+            let tempGasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
+            gasolinaValor = Array.isArray(tempGasolinaValor) ? tempGasolinaValor : [];
+
+            document.getElementById('caixaResumoTotal').innerHTML = `R$ ${calcularTotal(caixaTroco).toFixed(2)}`;
+            document.getElementById('gasolinaResumoTotal').innerHTML = `R$ ${calcularTotal(gasolinaValor).toFixed(2)}`;
         
-        const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        }).replace(',', '');
+            document.getElementById('inputCaixaValor').value = '';
+            document.getElementById('inputCaixaData').value = '';
+            document.getElementById('inputGasolinaValor').value = '';
+            document.getElementById('inputGasolinaData').value = '';
 
-        if (!nome || isNaN(valor) || (pago && !pagamento)) {
-            return alert("Preencha todos os campos corretamente. Se marcou pago, escolha forma de pagamento.");
+            renderizarDetalhes('caixa');
+            renderizarDetalhes('gasolina');
         }
 
-        entregas.push({
-            nome,
-            telefone,
-            descricao,
-            valor,
-            pagamento: formaPagamento,
-            pago,
-            data: dataFormatada,
-            emergencial: false,
-            coletado: false // NOVO CAMPO: Inicialmente false
-        });
+        function toggleDetalhes(tipo) {
+            const detalhesDiv = document.getElementById(`detalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+            detalhesDiv.classList.toggle('hidden');
+            renderizarDetalhes(tipo);
+        }
 
-        salvar();
+        function renderizarDetalhes(tipo) {
+            const listaUl = document.getElementById(`listaDetalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+            listaUl.innerHTML = '';
+            const dados = tipo === 'caixa' ? caixaTroco : gasolinaValor;
 
-        document.getElementById("nome").value = "";
-        document.getElementById("telefone").value = "";
-        document.getElementById("descricao").value = "";
-        document.getElementById("valor").value = "";
-        document.getElementById("pagamento").value = "";
-        document.getElementById("pago").checked = false;
-    }
-    
-    function salvar() {
-        localStorage.setItem("entregas", JSON.stringify(entregas));
-        renderizar(); // Garante que a tabela principal seja atualizada
-        renderizarPagos(); // Garante que a tabela de pagos/nao pagos seja atualizada
-        renderizarNaoColetados(); // Garante que a tabela de nao coletados seja atualizada
-    }
-    
-    function marcarEmergencial(i) {
-        entregas[i].emergencial = !entregas[i].emergencial;
-        salvar();
-    }
-    
-    function excluir(i) {
-        if (confirm("Excluir coleta?")) {
-            entregas.splice(i, 1);
+            if (!Array.isArray(dados)) {
+                listaUl.innerHTML = '<li>Erro: Dados de lançamento não são válidos.</li>';
+                return;
+            }
+
+            if (dados.length === 0) {
+                listaUl.innerHTML = '<li>Nenhum lançamento registrado para esta semana.</li>';
+                return;
+            }
+
+            dados.forEach(item => {
+                listaUl.innerHTML += `
+                    <li>
+                        <span>${formatarDataParaExibicao(item.data)}</span>
+                        <span class="valor">R$ ${item.valor.toFixed(2)}</span>
+                    </li>
+                `;
+            });
+        }
+
+        function showPage(id) {
+            ["principal", "pagos", "naoPagos", "naoColetados", "caixa", "registros"].forEach(p => {
+                document.getElementById(p).classList.add("hidden");
+            });
+            document.getElementById(id).classList.remove("hidden");
+            if (id === "caixa") {
+                calcularCaixa();
+                atualizarCaixaGasolina();
+            } else {
+                document.getElementById('detalhesCaixa').classList.add('hidden');
+                document.getElementById('detalhesGasolina').classList.add('hidden');
+            }
+            if (id === "registros") {
+                document.getElementById("filtroDataInicio").value = "";
+                document.getElementById("filtroDataFim").value = "";
+                aplicarFiltroHistorico();
+            }
+            if (id === "pagos" || id === "naoPagos") renderizarPagos();
+            if (id === "naoColetados") renderizarNaoColetados();
+            if (id === "principal") renderizar();
+            closeNav(); // Fechar o menu ao selecionar uma página
+        }
+
+        function openNav() {
+            document.getElementById("mainNav").classList.add("open");
+            document.getElementById("overlay").classList.add("open");
+            document.getElementById("hamburgerBtn").classList.add("open");
+        }
+
+        function closeNav() {
+            document.getElementById("mainNav").classList.remove("open");
+            document.getElementById("overlay").classList.remove("open");
+            document.getElementById("hamburgerBtn").classList.remove("open");
+        }
+        
+        function adicionarEntrega() {
+            const nome = document.getElementById("nome").value.trim();
+            const telefone = document.getElementById("telefone").value.trim();
+            const descricao = document.getElementById("descricao").value.trim();
+            const valor = parseFloat(document.getElementById("valor").value);
+            const pagamento = document.getElementById("pagamento").value;
+            const pago = document.getElementById("pago").checked;
+            const formaPagamento = pago ? pagamento : "";
+            const dataAtual = new Date();
+            
+            const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            }).replace(',', '');
+
+            if (!nome || isNaN(valor) || (pago && !pagamento)) {
+                return alert("Preencha todos os campos corretamente. Se marcou pago, escolha forma de pagamento.");
+            }
+
+            entregas.push({
+                nome,
+                telefone,
+                descricao,
+                valor,
+                pagamento: formaPagamento,
+                pago,
+                data: dataFormatada,
+                emergencial: false,
+                coletado: false
+            });
+
+            salvar();
+
+            document.getElementById("nome").value = "";
+            document.getElementById("telefone").value = "";
+            document.getElementById("descricao").value = "";
+            document.getElementById("valor").value = "";
+            document.getElementById("pagamento").value = "";
+            document.getElementById("pago").checked = false;
+        }
+        
+        function salvar() {
+            localStorage.setItem("entregas", JSON.stringify(entregas));
+            renderizar();
+            renderizarPagos();
+            renderizarNaoColetados();
+        }
+        
+        function marcarEmergencial(i) {
+            entregas[i].emergencial = !entregas[i].emergencial;
             salvar();
         }
-    }
-    
-    function fecharSemana() {
-        if (!confirm("Fechar a semana? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
         
-        historico.push({ 
-            semana: new Date().toISOString(), 
-            dados: JSON.parse(JSON.stringify(entregas)), 
-            caixaLancamentos: JSON.parse(JSON.stringify(caixaTroco)),
-            gasolinaLancamentos: JSON.parse(JSON.stringify(gasolinaValor))
-        });
+        function excluir(i) {
+            if (confirm("Excluir coleta?")) {
+                entregas.splice(i, 1);
+                salvar();
+            }
+        }
         
-        entregas = [];
-        
-        caixaTroco = [];
-        gasolinaValor = [];
-        
-        localStorage.setItem("entregas", "[]");
-        localStorage.setItem("historico", JSON.stringify(historico));
-        localStorage.setItem("caixaTroco", JSON.stringify(caixaTroco));
-        localStorage.setItem("gasolinaValor", JSON.stringify(gasolinaValor));
-        
-        renderizar();
-        atualizarCaixaGasolina();
-        renderizarNaoColetados(); // Limpa também a de não coletados
-        alert("Semana fechada. Dados salvos em registros e caixa/gasolina zerados.");
-    }
-    
-    function atualizarCampo(i, campo, valor) {
-        if (campo === "valor") {
-            valor = parseFloat(valor);
-            if (isNaN(valor)) return;
-        }
-        entregas[i][campo] = valor;
-        if (campo === "pago" && !valor) { // Se desmarcou pago, limpa forma de pagamento
-            entregas[i].pagamento = "";
-        }
-        salvar();
-    }
-    
-    function togglePago(i) {
-        entregas[i].pago = !entregas[i].pago;
-        if (!entregas[i].pago) entregas[i].pagamento = ""; // Se desmarcou pago, limpa forma de pagamento
-        salvar();
-    }
-
-    // NOVA FUNÇÃO PARA MARCAR/DESMARCAR COLETADO
-    function toggleColetado(i) {
-        entregas[i].coletado = !entregas[i].coletado;
-        salvar(); // Salva o estado atualizado e re-renderiza as tabelas
-    }
-    
-    function renderizar() {
-        const tabela = document.getElementById("tabela-principal");
-        tabela.innerHTML = "";
-        if (entregas.length === 0) {
-            tabela.innerHTML = `<tr><td colspan='9'>Nenhum registro na semana atual.</td></tr>`; // Alterado colspan para 9
-            return;
-        }
-        entregas.forEach((e, i) => {
-            tabela.innerHTML += `
-                <tr>
-                    <td><input type="text" value="${e.nome}" onchange="atualizarCampo(${i}, 'nome', this.value)" /></td>
-                    <td><input type="text" value="${e.telefone || ''}" onchange="atualizarCampo(${i}, 'telefone', this.value)" /></td>
-                    <td><input type="text" value="${e.descricao || ''}" onchange="atualizarCampo(${i}, 'descricao', this.value)" /></td>
-                    <td><input type="number" value="${e.valor.toFixed(2)}" onchange="atualizarCampo(${i}, 'valor', this.value)" /></td>
-                    <td>
-                        <select onchange="atualizarCampo(${i}, 'pagamento', this.value)">
-                            <option value="">Selecione</option>
-                            <option ${e.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
-                            <option ${e.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
-                            <option ${e.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
-                        </select>
-                    </td>
-                    <td><input type="checkbox" ${e.pago ? 'checked' : ''} onclick="togglePago(${i})" /></td>
-                    <td><input type="checkbox" ${e.coletado ? 'checked' : ''} onclick="toggleColetado(${i})" /></td> <td>${e.data}</td>
-                    <td>
-                        <button class="small" onclick="marcarEmergencial(${i})">R$10</button>
-                        <button class="small" onclick="excluir(${i})">X</button>
-                    </td>
-                </tr>
-            `;
-        });
-        // Essas chamadas são importantes para manter as outras tabelas sincronizadas
-        renderizarPagos();
-        renderizarNaoColetados();
-    }
-    
-    function renderizarPagos() {
-        const tabelaPagos = document.getElementById("tabela-pagos");
-        const tabelaNaoPagos = document.getElementById("tabela-naoPagos");
-        tabelaPagos.innerHTML = "";
-        tabelaNaoPagos.innerHTML = "";
-
-        const listaTelefones = document.getElementById("listaTelefones");
-        listaTelefones.innerHTML = "";
-        let telefonesNaoPagos = [];
-
-        const pagos = entregas.filter(e => e.pago);
-        const naoPagos = entregas.filter(e => !e.pago);
-
-        if (pagos.length === 0) {
-            tabelaPagos.innerHTML = `<tr><td colspan='7'>Nenhum cliente pago no momento.</td></tr>`;
-        } else {
-            pagos.forEach(e => {
-                tabelaPagos.innerHTML += `
-                    <tr>
-                        <td>${e.nome}</td>
-                        <td>${e.telefone || '-'}</td>
-                        <td>${e.descricao || '-'}</td>
-                        <td>R$ ${e.valor.toFixed(2)}</td>
-                        <td>${e.pagamento || '-'}</td>
-                        <td>${e.pago ? 'Sim' : 'Não'}</td>
-                        <td>${e.data}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        if (naoPagos.length === 0) {
-            tabelaNaoPagos.innerHTML = `<tr><td colspan='6'>Nenhum cliente não pago no momento.</td></tr>`;
-        } else {
-            naoPagos.forEach(e => {
-                tabelaNaoPagos.innerHTML += `
-                    <tr>
-                        <td>${e.nome}</td>
-                        <td>${e.telefone || '-'}</td>
-                        <td>${e.descricao || '-'}</td>
-                        <td>R$ ${e.valor.toFixed(2)}</td>
-                        <td>${e.pago ? 'Sim' : 'Não'}</td>
-                        <td>${e.data}</td>
-                    </tr>
-                `;
-                if (e.telefone) {
-                    telefonesNaoPagos.push(e.telefone);
-                }
-            });
-        }
-        listaTelefones.textContent = telefonesNaoPagos.join(', ');
-    }
-
-    // NOVA FUNÇÃO PARA RENDERIZAR NÃO COLETADOS
-    function renderizarNaoColetados() {
-        const tabelaNaoColetados = document.getElementById("tabela-naoColetados");
-        tabelaNaoColetados.innerHTML = "";
-        const naoColetados = entregas.filter(e => !e.coletado); // Filtra os não coletados
-
-        const listaTelefonesNaoColetados = document.getElementById("listaTelefonesNaoColetados");
-        listaTelefonesNaoColetados.innerHTML = "";
-
-        if (naoColetados.length === 0) {
-            tabelaNaoColetados.innerHTML = `<tr><td colspan='6'>Nenhuma mercadoria não coletada no momento.</td></tr>`;
-            return;
-        }
-
-        let telefones = [];
-        naoColetados.forEach((e) => { // Removido o 'i' aqui, pois não precisamos do índice do array filtrado, mas sim do original
-            // Encontra o índice original no array 'entregas' para as funções de ação
-            const originalIndex = entregas.findIndex(item => item === e);
+        function fecharSemana() {
+            if (!confirm("Fechar a semana? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
             
-            tabelaNaoColetados.innerHTML += `
-                <tr>
-                    <td>${e.nome}</td>
-                    <td>${e.telefone || '-'}</td>
-                    <td>${e.descricao || '-'}</td>
-                    <td>R$ ${e.valor.toFixed(2)}</td>
-                    <td>${e.data}</td>
-                    <td>
-                        <button class="small" onclick="toggleColetado(${originalIndex})">Marcar Coletado</button>
-                        <button class="small" onclick="excluir(${originalIndex})">X</button>
-                    </td>
-                </tr>
-            `;
-            if (e.telefone) {
-                telefones.push(e.telefone);
+            historico.push({ 
+                semana: new Date().toISOString(), 
+                dados: JSON.parse(JSON.stringify(entregas)), 
+                caixaLancamentos: JSON.parse(JSON.stringify(caixaTroco)),
+                gasolinaLancamentos: JSON.parse(JSON.stringify(gasolinaValor))
+            });
+            
+            entregas = [];
+            
+            caixaTroco = [];
+            gasolinaValor = [];
+            
+            localStorage.setItem("entregas", "[]");
+            localStorage.setItem("historico", JSON.stringify(historico));
+            localStorage.setItem("caixaTroco", JSON.stringify(caixaTroco));
+            localStorage.setItem("gasolinaValor", JSON.stringify(gasolinaValor));
+            
+            renderizar();
+            atualizarCaixaGasolina();
+            renderizarNaoColetados();
+            alert("Semana fechada. Dados salvos em registros e caixa/gasolina zerados.");
+        }
+        
+        function atualizarCampo(i, campo, valor) {
+            if (campo === "valor") {
+                valor = parseFloat(valor);
+                if (isNaN(valor)) return;
             }
-        });
-
-        listaTelefonesNaoColetados.textContent = telefones.join(', ');
-    }
-    
-    function calcularCaixa() {
-        // Seu código existente para calcular caixa
-        const totalBruto = entregas.reduce((acc, e) => acc + e.valor, 0);
-        const emergencialTotal = entregas.filter(e => e.emergencial).length * 10;
-        const subtotal = totalBruto + emergencialTotal;
-        const comissao = subtotal * 0.22;
-
-        document.getElementById("totalBruto").textContent = totalBruto.toFixed(2);
-        document.getElementById("emergencialTotal").textContent = emergencialTotal.toFixed(2);
-        document.getElementById("subtotal").textContent = subtotal.toFixed(2);
-        document.getElementById("comissao").textContent = comissao.toFixed(2);
-    }
-    
-    function aplicarFiltroHistorico() {
-        const inicio = document.getElementById("filtroDataInicio").value;
-        const fim = document.getElementById("filtroDataFim").value;
-        const historicoDiv = document.getElementById("historico");
-        historicoDiv.innerHTML = "";
-
-        if (historico.length === 0) {
-            historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum histórico registrado.</p>`;
-            return;
+            entregas[i][campo] = valor;
+            if (campo === "pago" && !valor) {
+                entregas[i].pagamento = "";
+            }
+            salvar();
+        }
+        
+        function togglePago(i) {
+            entregas[i].pago = !entregas[i].pago;
+            if (!entregas[i].pago) entregas[i].pagamento = "";
+            salvar();
         }
 
-        let resultadosFiltrados = [];
-
-        historico.forEach((semanaRecord, semanaIndex) => {
-            const dataSemana = new Date(semanaRecord.semana);
-            const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
-            const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
-
-            let incluirSemana = true;
-            if (dataInicio && dataSemana < dataInicio) {
-                incluirSemana = false;
-            }
-            if (dataFim && dataSemana > dataFim) {
-                incluirSemana = false;
-            }
-
-            if (incluirSemana) {
-                resultadosFiltrados.push({ ...semanaRecord, originalIndex: semanaIndex });
-            }
-        });
-
-        historicoFiltradoAtual = resultadosFiltrados; // Guarda para apagar filtrados
-
-        if (resultadosFiltrados.length === 0) {
-            historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum registro encontrado para o período selecionado.</p>`;
-            return;
+        function toggleColetado(i) {
+            entregas[i].coletado = !entregas[i].coletado;
+            salvar();
         }
+        
+        function renderizar() {
+            const tabela = document.getElementById("tabela-principal");
+            tabela.innerHTML = "";
+            if (entregas.length === 0) {
+                tabela.innerHTML = `<tr><td colspan='9'>Nenhum registro na semana atual.</td></tr>`;
+                return;
+            }
+            entregas.forEach((e, i) => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td><input type="text" value="${e.nome}" onchange="atualizarCampo(${i}, 'nome', this.value)" /></td>
+                        <td><input type="text" value="${e.telefone || ''}" onchange="atualizarCampo(${i}, 'telefone', this.value)" /></td>
+                        <td><input type="text" value="${e.descricao || ''}" onchange="atualizarCampo(${i}, 'descricao', this.value)" /></td>
+                        <td><input type="number" value="${e.valor.toFixed(2)}" onchange="atualizarCampo(${i}, 'valor', this.value)" /></td>
+                        <td>
+                            <select onchange="atualizarCampo(${i}, 'pagamento', this.value)">
+                                <option value="">Selecione</option>
+                                <option ${e.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
+                                <option ${e.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
+                                <option ${e.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
+                            </select>
+                        </td>
+                        <td><input type="checkbox" ${e.pago ? 'checked' : ''} onclick="togglePago(${i})" /></td>
+                        <td><input type="checkbox" ${e.coletado ? 'checked' : ''} onclick="toggleColetado(${i})" /></td>
+                        <td>${e.data}</td>
+                        <td>
+                            <button class="small" onclick="marcarEmergencial(${i})">R$10</button>
+                            <button class="small" onclick="excluir(${i})">X</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            renderizarPagos();
+            renderizarNaoColetados();
+        }
+        
+        function renderizarPagos() {
+            const tabelaPagos = document.getElementById("tabela-pagos");
+            const tabelaNaoPagos = document.getElementById("tabela-naoPagos");
+            tabelaPagos.innerHTML = "";
+            tabelaNaoPagos.innerHTML = "";
 
-        resultadosFiltrados.forEach((semanaRecord, idx) => {
-            const semanaTitulo = `Semana de ${new Date(semanaRecord.semana).toLocaleDateString('pt-BR')}`;
-            let semanaContent = `<h3>${semanaTitulo}</h3>`;
+            const listaTelefones = document.getElementById("listaTelefones");
+        
+            let telefonesNaoPagos = [];
 
-            // Adiciona totais da semana
-            const totalBrutoSemana = semanaRecord.dados.reduce((acc, e) => acc + e.valor, 0);
-            const emergencialSemana = semanaRecord.dados.filter(e => e.emergencial).length * 10;
-            const subtotalSemana = totalBrutoSemana + emergencialSemana;
-            const comissaoSemana = subtotalSemana * 0.22;
+            const pagos = entregas.filter(e => e.pago);
+            const naoPagos = entregas.filter(e => !e.pago);
 
-            semanaContent += `
-                <div class="resumo-extra" style="border-top: none; padding-top: 0;">
-                    <p>Total Bruto: <strong>R$ ${totalBrutoSemana.toFixed(2)}</strong></p>
-                    <p>Emergenciais: <strong>R$ ${emergencialSemana.toFixed(2)}</strong></p>
-                    <p>Subtotal: <strong>R$ ${subtotalSemana.toFixed(2)}</strong></p>
-                    <p>Comissão: <strong>R$ ${comissaoSemana.toFixed(2)}</strong></p>
-                </div>
-            `;
-
-            // Adiciona tabela de entregas da semana
-            semanaContent += `
-                <table style="width: 100%; margin-top: 10px;">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" onchange="toggleSelectAllHistorico(this, ${idx})" aria-label="Selecionar todos da semana" /></th>
-                            <th>Nome</th>
-                            <th>Valor (R$)</th>
-                            <th>Pago</th>
-                            <th>Coletado</th> <th>Data</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            if (semanaRecord.dados.length === 0) {
-                semanaContent += `<tr><td colspan="6">Nenhum registro de entrega para esta semana.</td></tr>`;
+            if (pagos.length === 0) {
+                tabelaPagos.innerHTML = `<tr><td colspan='7'>Nenhum cliente pago no momento.</td></tr>`;
             } else {
-                semanaRecord.dados.forEach((entrega, entregaIdx) => {
-                    semanaContent += `
+                pagos.forEach(e => {
+                    tabelaPagos.innerHTML += `
                         <tr>
-                            <td><input type="checkbox" class="historico-checkbox" data-semana-idx="${idx}" data-entrega-idx="${entregaIdx}" aria-label="Selecionar registro" /></td>
-                            <td>${entrega.nome}</td>
-                            <td>R$ ${entrega.valor.toFixed(2)}</td>
-                            <td>${entrega.pago ? 'Sim' : 'Não'}</td>
-                            <td>${entrega.coletado ? 'Sim' : 'Não'}</td> <td>${entrega.data}</td>
+                            <td>${e.nome}</td>
+                            <td>${e.telefone || '-'}</td>
+                            <td>${e.descricao || '-'}</td>
+                            <td>R$ ${e.valor.toFixed(2)}</td>
+                            <td>${e.pagamento || '-'}</td>
+                            <td>${e.pago ? 'Sim' : 'Não'}</td>
+                            <td>${e.data}</td>
                         </tr>
                     `;
                 });
             }
-            semanaContent += `</tbody></table>`;
 
-            // Adiciona detalhes de caixa e gasolina da semana
-            const totalCaixaSemana = calcularTotal(semanaRecord.caixaLancamentos);
-            const totalGasolinaSemana = calcularTotal(semanaRecord.gasolinaLancamentos);
-
-            semanaContent += `
-                <div class="resumo-extra">
-                    <p>Total Caixa (troco): <strong id="caixaResumoTotalSemana_${idx}">R$ ${totalCaixaSemana.toFixed(2)}</strong></p>
-                    <div class="detalhes-container">
-                        <h4>Detalhes do Caixa (troco) da Semana</h4>
-                        <ul>
-            `;
-            if (semanaRecord.caixaLancamentos && semanaRecord.caixaLancamentos.length > 0) {
-                semanaRecord.caixaLancamentos.forEach(item => {
-                    semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
-                });
+            if (naoPagos.length === 0) {
+                tabelaNaoPagos.innerHTML = `<tr><td colspan='6'>Nenhum cliente não pago no momento.</td></tr>`;
             } else {
-                semanaContent += `<li>Nenhum lançamento de caixa para esta semana.</li>`;
-            }
-            semanaContent += `
-                        </ul>
-                    </div>
-                    <p style="margin-top:10px;">Total Gasolina: <strong id="gasolinaResumoTotalSemana_${idx}">R$ ${totalGasolinaSemana.toFixed(2)}</strong></p>
-                    <div class="detalhes-container">
-                        <h4>Detalhes da Gasolina da Semana</h4>
-                        <ul>
-            `;
-            if (semanaRecord.gasolinaLancamentos && semanaRecord.gasolinaLancamentos.length > 0) {
-                semanaRecord.gasolinaLancamentos.forEach(item => {
-                    semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
+                naoPagos.forEach(e => {
+                    tabelaNaoPagos.innerHTML += `
+                        <tr>
+                            <td>${e.nome}</td>
+                            <td>${e.telefone || '-'}</td>
+                            <td>${e.descricao || '-'}</td>
+                            <td>R$ ${e.valor.toFixed(2)}</td>
+                            <td>${e.pago ? 'Sim' : 'Não'}</td>
+                            <td>${e.data}</td>
+                        </tr>
+                    `;
+                    if (e.telefone) {
+                        telefonesNaoPagos.push(e.telefone);
+                    }
                 });
-            } else {
-                semanaContent += `<li>Nenhum lançamento de gasolina para esta semana.</li>`;
             }
-            semanaContent += `
-                        </ul>
-                    </div>
-                </div>
-            `;
-            historicoDiv.innerHTML += `<div class="historico-semana">${semanaContent}</div>`;
-        });
-    }
+            listaTelefones.textContent = telefonesNaoPagos.join(', ');
+        }
 
-    // Funções de manipulação do histórico
-    function toggleSelectAllHistorico(checkbox, semanaIndex) {
-        const checkboxes = document.querySelectorAll(`#historico [data-semana-idx="${semanaIndex}"]`);
-        checkboxes.forEach(cb => cb.checked = checkbox.checked);
-    }
+        function renderizarNaoColetados() {
+            const tabelaNaoColetados = document.getElementById("tabela-naoColetados");
+            tabelaNaoColetados.innerHTML = "";
+            const naoColetados = entregas.filter(e => !e.coletado);
 
-    function apagarSelecionados() {
-        if (!confirm("Tem certeza que deseja apagar os registros selecionados?")) return;
+            const listaTelefonesNaoColetados = document.getElementById("listaTelefonesNaoColetados");
+            listaTelefonesNaoColetados.innerHTML = "";
 
-        const checkboxes = document.querySelectorAll('.historico-checkbox:checked');
-        const paraRemover = []; // Array de objetos { semanaIndex, entregaIndex }
+            if (naoColetados.length === 0) {
+                tabelaNaoColetados.innerHTML = `<tr><td colspan='6'>Nenhuma mercadoria não coletada no momento.</td></tr>`;
+                return;
+            }
 
-        checkboxes.forEach(cb => {
-            const semanaIdx = parseInt(cb.dataset.semanaIdx);
-            const entregaIdx = parseInt(cb.dataset.entregaIdx);
-            paraRemover.push({ semanaIdx, entregaIdx });
-        });
-
-        // Agrupa por semana para remover de trás para frente e não bagunçar os índices
-        const agrupadoPorSemana = paraRemover.reduce((acc, item) => {
-            acc[item.semanaIdx] = acc[item.semanaIdx] || [];
-            acc[item.semanaIdx].push(item.entregaIdx);
-            return acc;
-        }, {});
-
-        for (const semanaIdxStr in agrupadoPorSemana) {
-            const semanaIdx = parseInt(semanaIdxStr);
-            // Ordena os índices das entregas em ordem decrescente para remover sem problemas
-            const indicesEntregas = agrupadoPorSemana[semanaIdx].sort((a, b) => b - a);
-
-            indicesEntregas.forEach(entregaIdx => {
-                if (historico[semanaIdx] && historico[semanaIdx].dados) {
-                    historico[semanaIdx].dados.splice(entregaIdx, 1);
+            let telefones = [];
+            naoColetados.forEach((e) => {
+                const originalIndex = entregas.findIndex(item => item === e);
+                
+                tabelaNaoColetados.innerHTML += `
+                    <tr>
+                        <td>${e.nome}</td>
+                        <td>${e.telefone || '-'}</td>
+                        <td>${e.descricao || '-'}</td>
+                        <td>R$ ${e.valor.toFixed(2)}</td>
+                        <td>${e.data}</td>
+                        <td>
+                            <button class="small" onclick="toggleColetado(${originalIndex})">Marcar Coletado</button>
+                            <button class="small" onclick="excluir(${originalIndex})">X</button>
+                        </td>
+                    </tr>
+                `;
+                if (e.telefone) {
+                    telefones.push(e.telefone);
                 }
             });
-            // Se a semana ficar vazia de entregas, você pode considerar removê-la,
-            // mas o código atual mantém a semana vazia para mostrar outros dados (caixa, gasolina)
+
+            listaTelefonesNaoColetados.textContent = telefones.join(', ');
+        }
+        
+        function calcularCaixa() {
+            const totalBruto = entregas.reduce((acc, e) => acc + e.valor, 0);
+            const emergencialTotal = entregas.filter(e => e.emergencial).length * 10;
+            const subtotal = totalBruto + emergencialTotal;
+            const comissao = subtotal * 0.22;
+
+            document.getElementById("totalBruto").textContent = totalBruto.toFixed(2);
+            document.getElementById("emergencialTotal").textContent = emergencialTotal.toFixed(2);
+            document.getElementById("subtotal").textContent = subtotal.toFixed(2);
+            document.getElementById("comissao").textContent = comissao.toFixed(2);
+        }
+        
+        function aplicarFiltroHistorico() {
+            const inicio = document.getElementById("filtroDataInicio").value;
+            const fim = document.getElementById("filtroDataFim").value;
+            const historicoDiv = document.getElementById("historico");
+            historicoDiv.innerHTML = "";
+
+            if (historico.length === 0) {
+                historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum histórico registrado.</p>`;
+                return;
+            }
+
+            let resultadosFiltrados = [];
+
+            historico.forEach((semanaRecord, semanaIndex) => {
+                const dataSemana = new Date(semanaRecord.semana);
+                const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
+                const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
+
+                let incluirSemana = true;
+                if (dataInicio && dataSemana < dataInicio) {
+                    incluirSemana = false;
+                }
+                if (dataFim && dataSemana > dataFim) {
+                    incluirSemana = false;
+                }
+
+                if (incluirSemana) {
+                    resultadosFiltrados.push({ ...semanaRecord, originalIndex: semanaIndex });
+                }
+            });
+
+            historicoFiltradoAtual = resultadosFiltrados;
+
+            if (resultadosFiltrados.length === 0) {
+                historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum registro encontrado para o período selecionado.</p>`;
+                return;
+            }
+
+            resultadosFiltrados.forEach((semanaRecord, idx) => {
+                const semanaTitulo = `Semana de ${new Date(semanaRecord.semana).toLocaleDateString('pt-BR')}`;
+                let semanaContent = `<h3>${semanaTitulo}</h3>`;
+
+                const totalBrutoSemana = semanaRecord.dados.reduce((acc, e) => acc + e.valor, 0);
+                const emergencialSemana = semanaRecord.dados.filter(e => e.emergencial).length * 10;
+                const subtotalSemana = totalBrutoSemana + emergencialSemana;
+                const comissaoSemana = subtotalSemana * 0.22;
+
+                semanaContent += `
+                    <div class="resumo-extra" style="border-top: none; padding-top: 0;">
+                        <p>Total Bruto: <strong>R$ ${totalBrutoSemana.toFixed(2)}</strong></p>
+                        <p>Emergenciais: <strong>R$ ${emergencialSemana.toFixed(2)}</strong></p>
+                        <p>Subtotal: <strong>R$ ${subtotalSemana.toFixed(2)}</strong></p>
+                        <p>Comissão: <strong>R$ ${comissaoSemana.toFixed(2)}</strong></p>
+                    </div>
+                `;
+
+                semanaContent += `
+                    <table style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" onchange="toggleSelectAllHistorico(this, ${idx})" aria-label="Selecionar todos da semana" /></th>
+                                <th>Nome</th>
+                                <th>Valor (R$)</th>
+                                <th>Pago</th>
+                                <th>Coletado</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                if (semanaRecord.dados.length === 0) {
+                    semanaContent += `<tr><td colspan="6">Nenhum registro de entrega para esta semana.</td></tr>`;
+                } else {
+                    semanaRecord.dados.forEach((entrega, entregaIdx) => {
+                        semanaContent += `
+                            <tr>
+                                <td><input type="checkbox" class="historico-checkbox" data-semana-idx="${idx}" data-entrega-idx="${entregaIdx}" aria-label="Selecionar registro" /></td>
+                                <td>${entrega.nome}</td>
+                                <td>R$ ${entrega.valor.toFixed(2)}</td>
+                                <td>${entrega.pago ? 'Sim' : 'Não'}</td>
+                                <td>${entrega.coletado ? 'Sim' : 'Não'}</td>
+                                <td>${entrega.data}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                semanaContent += `</tbody></table>`;
+
+                const totalCaixaSemana = calcularTotal(semanaRecord.caixaLancamentos);
+                const totalGasolinaSemana = calcularTotal(semanaRecord.gasolinaLancamentos);
+
+                semanaContent += `
+                    <div class="resumo-extra">
+                        <p>Total Caixa (troco): <strong id="caixaResumoTotalSemana_${idx}">R$ ${totalCaixaSemana.toFixed(2)}</strong></p>
+                        <div class="detalhes-container">
+                            <h4>Detalhes do Caixa (troco) da Semana</h4>
+                            <ul>
+                `;
+                if (semanaRecord.caixaLancamentos && semanaRecord.caixaLancamentos.length > 0) {
+                    semanaRecord.caixaLancamentos.forEach(item => {
+                        semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
+                    });
+                } else {
+                    semanaContent += `<li>Nenhum lançamento de caixa para esta semana.</li>`;
+                }
+                semanaContent += `
+                            </ul>
+                        </div>
+                        <p style="margin-top:10px;">Total Gasolina: <strong id="gasolinaResumoTotalSemana_${idx}">R$ ${totalGasolinaSemana.toFixed(2)}</strong></p>
+                        <div class="detalhes-container">
+                            <h4>Detalhes da Gasolina da Semana</h4>
+                            <ul>
+                `;
+                if (semanaRecord.gasolinaLancamentos && semanaRecord.gasolinaLancamentos.length > 0) {
+                    semanaRecord.gasolinaLancamentos.forEach(item => {
+                        semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
+                    });
+                } else {
+                    semanaContent += `<li>Nenhum lançamento de gasolina para esta semana.</li>`;
+                }
+                semanaContent += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                historicoDiv.innerHTML += `<div class="historico-semana">${semanaContent}</div>`;
+            });
         }
 
-        localStorage.setItem("historico", JSON.stringify(historico));
-        aplicarFiltroHistorico(); // Re-renderiza o histórico
-        alert("Registros selecionados apagados!");
-    }
+        function toggleSelectAllHistorico(checkbox, semanaIndex) {
+            const checkboxes = document.querySelectorAll(`#historico [data-semana-idx="${semanaIndex}"]`);
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
 
-    function apagarFiltrados() {
-        if (!confirm("Tem certeza que deseja apagar TODOS os registros filtrados?")) return;
+        function apagarSelecionados() {
+            if (!confirm("Tem certeza que deseja apagar os registros selecionados?")) return;
 
-        // Cria uma lista dos índices originais das semanas que *não* estão no filtro atual
-        const semanasParaManter = historico.filter((_, idx) => {
-            return !historicoFiltradoAtual.some(filteredRecord => filteredRecord.originalIndex === idx);
-        });
+            const checkboxes = document.querySelectorAll('.historico-checkbox:checked');
+            const paraRemover = [];
 
-        historico = semanasParaManter; // Substitui o histórico pelo que deve ser mantido
+            checkboxes.forEach(cb => {
+                const semanaIdx = parseInt(cb.dataset.semanaIdx);
+                const entregaIdx = parseInt(cb.dataset.entregaIdx);
+                paraRemover.push({ semanaIdx, entregaIdx });
+            });
 
-        localStorage.setItem("historico", JSON.stringify(historico));
-        aplicarFiltroHistorico(); // Re-renderiza o histórico, agora vazio ou com menos itens
-        alert("Registros filtrados apagados!");
-    }
+            const agrupadoPorSemana = paraRemover.reduce((acc, item) => {
+                acc[item.semanaIdx] = acc[item.semanaIdx] || [];
+                acc[item.semanaIdx].push(item.entregaIdx);
+                return acc;
+            }, {});
 
-    function apagarTodosHistorico() {
-        if (confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) {
-            historico = [];
-            localStorage.setItem("historico", "[]");
+            for (const semanaIdxStr in agrupadoPorSemana) {
+                const semanaIdx = parseInt(semanaIdxStr);
+                const indicesEntregas = agrupadoPorSemana[semanaIdx].sort((a, b) => b - a);
+
+                indicesEntregas.forEach(entregaIdx => {
+                    if (historico[semanaIdx] && historico[semanaIdx].dados) {
+                        historico[semanaIdx].dados.splice(entregaIdx, 1);
+                    }
+                });
+            }
+
+            localStorage.setItem("historico", JSON.stringify(historico));
             aplicarFiltroHistorico();
-            alert("Todo o histórico de registros foi apagado.");
-        }
-    }
-
-    function enviarMensagemGeral() {
-        const naoPagosComTelefone = entregas.filter(e => !e.pago && e.telefone);
-        if (naoPagosComTelefone.length === 0) {
-            alert("Não há clientes não pagos e com telefone registrado para enviar mensagem.");
-            return;
+            alert("Registros selecionados apagados!");
         }
 
-        let mensagem = "Olá! Gostaríamos de lembrar que sua pendência conosco ainda não foi paga.\n\nDetalhes:\n";
-        naoPagosComTelefone.forEach(e => {
-            mensagem += `\n- Cliente: ${e.nome}\n  Descrição: ${e.descricao}\n  Valor: R$ ${e.valor.toFixed(2)}\n`;
+        function apagarFiltrados() {
+            if (!confirm("Tem certeza que deseja apagar TODOS os registros filtrados?")) return;
+
+            const semanasParaManter = historico.filter((_, idx) => {
+                return !historicoFiltradoAtual.some(filteredRecord => filteredRecord.originalIndex === idx);
+            });
+
+            historico = semanasParaManter;
+
+            localStorage.setItem("historico", JSON.stringify(historico));
+            aplicarFiltroHistorico();
+            alert("Registros filtrados apagados!");
+        }
+
+        function apagarTodosHistorico() {
+            if (confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) {
+                historico = [];
+                localStorage.setItem("historico", "[]");
+                aplicarFiltroHistorico();
+                alert("Todo o histórico de registros foi apagado.");
+            }
+        }
+
+        function enviarMensagemGeral() {
+            const naoPagosComTelefone = entregas.filter(e => !e.pago && e.telefone);
+            if (naoPagosComTelefone.length === 0) {
+                alert("Não há clientes não pagos e com telefone registrado para enviar mensagem.");
+                return;
+            }
+
+            let mensagem = "Olá! Gostaríamos de lembrar que sua pendência conosco ainda não foi paga.\n\nDetalhes:\n";
+            naoPagosComTeletelefone.forEach(e => {
+                mensagem += `\n- Cliente: ${e.nome}\n  Descrição: ${e.descricao}\n  Valor: R$ ${e.valor.toFixed(2)}\n`;
+            });
+            mensagem += "\nPor favor, entre em contato para regularizar. Obrigado!";
+
+            const confirmSend = confirm("Será gerada uma mensagem geral para os clientes não pagos. Copie a lista de telefones abaixo e cole no WhatsApp. Deseja continuar?");
+            if (confirmSend) {
+                alert("Mensagem pronta. Por favor, copie a lista de telefones e cole no WhatsApp para enviar.");
+            }
+        }
+
+        function enviarMensagemNaoColetadosGeral() {
+            const naoColetados = entregas.filter(e => !e.coletado && e.telefone);
+            if (naoColetados.length === 0) {
+                alert("Não há clientes com mercadorias não coletadas e telefone registrado para enviar mensagem.");
+                return;
+            }
+
+            let mensagem = "Olá! Gostaríamos de lembrar que sua mercadoria conosco ainda não foi coletada.\n\nDetalhes:\n";
+            naoColetados.forEach(e => {
+                mensagem += `\n- Cliente: ${e.nome}\n  Descrição: ${e.descricao}\n  Valor: R$ ${e.valor.toFixed(2)}\n`;
+            });
+            mensagem += "\nPor favor, entre em contato para agendar a coleta. Obrigado!";
+
+            const confirmSend = confirm("Será gerada uma mensagem geral para os clientes com mercadorias não coletadas. Copie a lista de telefones abaixo e cole no WhatsApp. Deseja continuar?");
+            if (confirmSend) {
+                alert("Mensagem pronta. Por favor, copie a lista de telefones e cole no WhatsApp para enviar.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('principal');
         });
-        mensagem += "\nPor favor, entre em contato para regularizar. Obrigado!";
 
-        const confirmSend = confirm("Será gerada uma mensagem geral para os clientes não pagos. Copie a lista de telefones abaixo e cole no WhatsApp. Deseja continuar?");
-        if (confirmSend) {
-            alert("Mensagem pronta. Por favor, copie a lista de telefones e cole no WhatsApp para enviar.");
-        }
-    }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <button id="hamburgerBtn" class="hamburger-btn" onclick="openNav()" aria-label="Abrir menu">
+                <span class="hamburger-icon"></span>
+                <span class="hamburger-icon"></span>
+                <span class="hamburger-icon"></span>
+            </button>
+            <a href="#" onclick="showPage('principal'); return false;" class="logo-link" aria-label="Voltar para a página principal">
+                <img src="/icons/r_grande_dividido.png" alt="Logo da Empresa R" loading="lazy">
+            </a>
+            <h1>Controle de Entregas</h1>
+        </header>
 
-    // Inicializa a renderização quando a página carrega
-    document.addEventListener('DOMContentLoaded', () => {
-        showPage('principal'); // Mostra a página principal por padrão
-        // Se você quiser que o app sempre comece mostrando "principal", "pagos", etc.,
-        // apenas chame a função correspondente aqui:
-        // showPage('principal');
-    });
+        <nav id="mainNav" class="main-nav">
+            <ul class="nav-list">
+                <li><button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button></li>
+                <li><button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button></li>
+                <li><button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button></li>
+                <li><button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button></li>
+                <li><button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button></li>
+                <li><button onclick="showPage('registros')" aria-controls="registros" role="tab">Registros</button></li>
+            </ul>
+        </nav>
 
-</script>
+        <div id="overlay" class="overlay" onclick="closeNav()"></div>
 
-</body>
+        <div id="principal" role="tabpanel" tabindex="0">
+            <div style="display:flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 10px;">
+                <input type="text" id="nome" placeholder="Nome" aria-label="Nome" />
+                <input type="text" id="telefone" placeholder="Telefone" aria-label="Telefone" />
+                <input type="text" id="descricao" placeholder="Descrição" aria-label="Descrição" />
+                <input type="number" id="valor" placeholder="Valor (R$)" min="0" step="0.01" aria-label="Valor" />
+                <select id="pagamento" aria-label="Forma de pagamento">
+                    <option value="">Forma de pagamento</option>
+                    <option>PGA</option>
+                    <option>PGR</option>
+                    <option>PIX</option>
+                </select>
+                <label for="pago" style="align-self: center;">Pago: <input type="checkbox" id="pago" aria-label="Pago" /></label>
+                <button onclick="adicionarEntrega()" aria-label="Adicionar entrega">Adicionar</button>
+                <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Semana</button>
+            </div>
+
+            <table aria-describedby="Tabela de entregas principal">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Pagamento</th>
+                        <th>Pago</th>
+                        <th>Coletado</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-principal"></tbody>
+            </table>
+        </div>
+
+        <div id="pagos" class="hidden" role="tabpanel" tabindex="0">
+            <h2>Clientes Pagos</h2>
+            <table aria-describedby="Tabela de clientes pagos">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Pagamento</th>
+                        <th>Pago</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-pagos"></tbody>
+            </table>
+        </div>
+
+        <div id="naoPagos" class="hidden" role="tabpanel" tabindex="0">
+            <h2>Clientes Não Pagos</h2>
+            <table aria-describedby="Tabela de clientes não pagos">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Pago</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-naoPagos"></tbody>
+            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+                <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
+            </div>
+        </div>
+
+        <div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
+            <h2>Mercadorias Não Coletadas</h2>
+            <table aria-describedby="Tabela de mercadorias não coletadas">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-naoColetados"></tbody>
+            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="enviarMensagemNaoColetadosGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+                <p>Telefones dos clientes com mercadorias não coletadas (para envio em massa): <span id="listaTelefonesNaoColetados"></span></p>
+            </div>
+        </div>
+
+        <div id="caixa" class="hidden" role="tabpanel" tabindex="0">
+            <h2>Resumo da Semana</h2>
+            <p>Total Bruto: <strong>R$ <span id="totalBruto"></span></strong></p>
+            <p>Emergenciais (R$10,00 por coleta): <strong>R$ <span id="emergencialTotal"></span></strong></p>
+            <p>Subtotal (com taxa emergencial): <strong>R$ <span id="subtotal"></span></strong></p>
+            <p>Comissão (22%): <strong>R$ <span id="comissao"></span></strong></p>
+
+            <div class="resumo-extra">
+                <p>Total Caixa (troco): <strong id="caixaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('caixa')">+ Detalhes</button></p>
+                <div id="detalhesCaixa" class="detalhes-container hidden">
+                    <h4>Detalhes do Caixa (troco)</h4>
+                    <ul id="listaDetalhesCaixa"></ul>
+                </div>
+
+                <p>Total Gasolina: <strong id="gasolinaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('gasolina')">+ Detalhes</button></p>
+                <div id="detalhesGasolina" class="detalhes-container hidden">
+                    <h4>Detalhes da Gasolina</h4>
+                    <ul id="listaDetalhesGasolina"></ul>
+                </div>
+            </div>
+
+            <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+
+            <div class="caixa-gasolina-container">
+                <div class="info-card caixa">
+                    <h3>💰 Lançar Caixa (troco)</h3>
+                    <input type="number" id="inputCaixaValor" placeholder="Valor (R$)" min="0" step="0.01">
+                    <input type="date" id="inputCaixaData">
+                    <button onclick="salvarCaixa()">Salvar Caixa</button>
+                </div>
+
+                <div class="info-card gasolina">
+                    <h3>⛽ Lançar Gasolina</h3>
+                    <input type="number" id="inputGasolinaValor" placeholder="Valor (R$)" min="0" step="0.01">
+                    <input type="date" id="inputGasolinaData">
+                    <button onclick="salvarGasolina()">Salvar Gasolina</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="registros" class="hidden" role="tabpanel" tabindex="0">
+            <h2>Histórico de Registros</h2>
+            <div class="filtro-container">
+                <label for="filtroDataInicio" class="filtro-item">
+                    <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
+                </label>
+                <label for="filtroDataFim" class="filtro-item">
+                    <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
+                </label>
+                <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
+            </div>
+            
+            <div class="botoes-historico-container">
+                <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
+                <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
+                <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
+            </div>
+            
+            <div id="historico"></div>
+        </div>
+    </div> </body>
 </html>
