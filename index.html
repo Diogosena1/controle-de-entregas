@@ -528,12 +528,28 @@
     <link rel="icon" href="/controle-de-entregas/icons/redemix_logo_192x192_no_honda.png" />
     <script src="/controle-de-entregas/script.js"></script>
 <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/controle-de-entregas/service-worker.js')
-        .then(() => console.log("Service Worker registrado com sucesso."))
-        .catch(err => console.error("Erro ao registrar Service Worker:", err));
-    }
-  </script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/controle-de-entregas/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registrado com sucesso.');
+
+        // Detecta quando uma nova versão está sendo instalada
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                alert('Nova versão disponível! Recarregue a página para atualizar o app.');
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.error('Erro ao registrar Service Worker:', err));
+  }
+</script>
+
 
 
 
