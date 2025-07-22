@@ -62,7 +62,7 @@
         }
 
         /* Card para seções */
-        #principal, #pagos, #naoPagos, #caixa, #registros {
+        #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
             background: white;
             max-width: 1100px;
             margin: 0 auto 40px;
@@ -407,7 +407,7 @@
                 font-size: 0.95em;
             }
 
-            #principal, #pagos, #naoPagos, #caixa, #registros {
+            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
                 padding: 15px;
                 margin-bottom: 20px;
             }
@@ -515,7 +515,7 @@
                 font-size: 0.85em;
                 padding: 7px 12px;
             }
-            #principal, #pagos, #naoPagos, #caixa, #registros {
+            #principal, #pagos, #naoPagos, #naoColetados, #caixa, #registros { /* Adicionado #naoColetados */
                 padding: 10px;
             }
             h2 {
@@ -524,16 +524,14 @@
         }
     </style>
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4CAF50">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(() => console.log("Service Worker registrado com sucesso."))
-      .catch(err => console.error("Erro ao registrar Service Worker:", err));
-  }
-</script>
-
-
+    <meta name="theme-color" content="#4CAF50">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/controle-de-entregas/service-worker.js')
+                .then(() => console.log("Service Worker registrado com sucesso."))
+                .catch(err => console.error("Erro ao registrar Service Worker:", err));
+        }
+    </script>
 </head>
 <body>
 
@@ -543,7 +541,7 @@
     <button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button>
     <button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button>
     <button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button>
-    <button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button>
+    <button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button> <button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button>
     <button onclick="showPage('registros')" aria-controls="registros" role="tab">Registros</button>
 </div>
 
@@ -573,7 +571,7 @@
                 <th>Valor (R$)</th>
                 <th>Pagamento</th>
                 <th>Pago</th>
-                <th>Data</th>
+                <th>Coletado</th> <th>Data</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -620,6 +618,26 @@
     </div>
 </div>
 
+<div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Mercadorias Não Coletadas</h2>
+    <table aria-describedby="Tabela de mercadorias não coletadas">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Descrição</th>
+                <th>Valor (R$)</th>
+                <th>Data</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-naoColetados"></tbody>
+    </table>
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="enviarMensagemNaoColetadosGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+        <p>Telefones dos clientes com mercadorias não coletadas (para envio em massa): <span id="listaTelefonesNaoColetados"></span></p>
+    </div>
+</div>
 <div id="caixa" class="hidden" role="tabpanel" tabindex="0">
     <h2>Resumo da Semana</h2>
     <p>Total Bruto: <strong>R$ <span id="totalBruto"></span></strong></p>
@@ -662,20 +680,25 @@
 
 <div id="registros" class="hidden" role="tabpanel" tabindex="0">
     <h2>Histórico de Registros</h2>
-    <div class="filtro-container"> <label for="filtroDataInicio" class="filtro-item"> <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
+    <div class="filtro-container">
+        <label for="filtroDataInicio" class="filtro-item">
+            <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
         </label>
-        <label for="filtroDataFim" class="filtro-item"> <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
+        <label for="filtroDataFim" class="filtro-item">
+            <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
         </label>
         <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
     </div>
     
-    <div class="botoes-historico-container"> <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
+    <div class="botoes-historico-container">
+        <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
         <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
         <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
     </div>
     
     <div id="historico"></div>
-    
+</div>
+
 <script>
     let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
     let historico = JSON.parse(localStorage.getItem("historico") || "[]");
@@ -798,9 +821,8 @@
         });
     }
 
-
     function showPage(id) {
-        ["principal", "pagos", "naoPagos", "caixa", "registros"].forEach(p => {
+        ["principal", "pagos", "naoPagos", "naoColetados", "caixa", "registros"].forEach(p => { // Adicionado "naoColetados"
             document.getElementById(p).classList.add("hidden");
         });
         document.getElementById(id).classList.remove("hidden");
@@ -816,8 +838,9 @@
             document.getElementById("filtroDataFim").value = "";
             aplicarFiltroHistorico();
         }
-        if (id === "pagos" || id === "naoPagos") renderizarPagos();
-        if(id === "principal") renderizar();
+        if (id === "pagos" || id === "naoPagos") renderizarPagos(); // renderizarPagos já cuida dos pagos e naoPagos
+        if (id === "naoColetados") renderizarNaoColetados(); // Chamada para a nova função
+        if (id === "principal") renderizar(); // Mantido para garantir que a principal seja sempre atualizada
     }
     
     function adicionarEntrega() {
@@ -847,7 +870,8 @@
             pagamento: formaPagamento,
             pago,
             data: dataFormatada,
-            emergencial: false
+            emergencial: false,
+            coletado: false // NOVO CAMPO: Inicialmente false
         });
 
         salvar();
@@ -862,7 +886,9 @@
     
     function salvar() {
         localStorage.setItem("entregas", JSON.stringify(entregas));
-        renderizar();
+        renderizar(); // Garante que a tabela principal seja atualizada
+        renderizarPagos(); // Garante que a tabela de pagos/nao pagos seja atualizada
+        renderizarNaoColetados(); // Garante que a tabela de nao coletados seja atualizada
     }
     
     function marcarEmergencial(i) {
@@ -899,6 +925,7 @@
         
         renderizar();
         atualizarCaixaGasolina();
+        renderizarNaoColetados(); // Limpa também a de não coletados
         alert("Semana fechada. Dados salvos em registros e caixa/gasolina zerados.");
     }
     
@@ -908,7 +935,7 @@
             if (isNaN(valor)) return;
         }
         entregas[i][campo] = valor;
-        if (campo === "pago" && !valor) {
+        if (campo === "pago" && !valor) { // Se desmarcou pago, limpa forma de pagamento
             entregas[i].pagamento = "";
         }
         salvar();
@@ -916,15 +943,21 @@
     
     function togglePago(i) {
         entregas[i].pago = !entregas[i].pago;
-        if (!entregas[i].pago) entregas[i].pagamento = "";
+        if (!entregas[i].pago) entregas[i].pagamento = ""; // Se desmarcou pago, limpa forma de pagamento
         salvar();
+    }
+
+    // NOVA FUNÇÃO PARA MARCAR/DESMARCAR COLETADO
+    function toggleColetado(i) {
+        entregas[i].coletado = !entregas[i].coletado;
+        salvar(); // Salva o estado atualizado e re-renderiza as tabelas
     }
     
     function renderizar() {
         const tabela = document.getElementById("tabela-principal");
         tabela.innerHTML = "";
         if (entregas.length === 0) {
-            tabela.innerHTML = `<tr><td colspan='8'>Nenhum registro na semana atual.</td></tr>`;
+            tabela.innerHTML = `<tr><td colspan='9'>Nenhum registro na semana atual.</td></tr>`; // Alterado colspan para 9
             return;
         }
         entregas.forEach((e, i) => {
@@ -933,232 +966,303 @@
                     <td><input type="text" value="${e.nome}" onchange="atualizarCampo(${i}, 'nome', this.value)" /></td>
                     <td><input type="text" value="${e.telefone || ''}" onchange="atualizarCampo(${i}, 'telefone', this.value)" /></td>
                     <td><input type="text" value="${e.descricao || ''}" onchange="atualizarCampo(${i}, 'descricao', this.value)" /></td>
-                    <td><input type="number" min="0" step="0.01" value="${e.valor}" onchange="atualizarCampo(${i}, 'valor', this.value)" /></td>
+                    <td><input type="number" value="${e.valor.toFixed(2)}" onchange="atualizarCampo(${i}, 'valor', this.value)" /></td>
                     <td>
-                        ${e.pago
-                            ? `<select onchange="atualizarCampo(${i}, 'pagamento', this.value)">
-                                    <option value="">Selecione</option>
-                                    <option value="PGA" ${e.pagamento === "PGA" ? "selected" : ""}>PGA</option>
-                                    <option value="PGR" ${e.pagamento === "PGR" ? "selected" : ""}>PGR</option>
-                                    <option value="PIX" ${e.pagamento === "PIX" ? "selected" : ""}>PIX</option>
-                                </select>`
-                            : "-"
-                        }
+                        <select onchange="atualizarCampo(${i}, 'pagamento', this.value)">
+                            <option value="">Selecione</option>
+                            <option ${e.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
+                            <option ${e.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
+                            <option ${e.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
+                        </select>
                     </td>
-                    <td><input type="checkbox" ${e.pago ? "checked" : ""} onchange="togglePago(${i})" /></td>
-                    <td>${e.data}</td>
+                    <td><input type="checkbox" ${e.pago ? 'checked' : ''} onclick="togglePago(${i})" /></td>
+                    <td><input type="checkbox" ${e.coletado ? 'checked' : ''} onclick="toggleColetado(${i})" /></td> <td>${e.data}</td>
                     <td>
-                        <button class="small" onclick="marcarEmergencial(${i})">${e.emergencial ? 'Emergencial' : 'Normal'}</button>
-                        <button class="small" onclick="excluir(${i})">🗑️</button>
+                        <button class="small" onclick="marcarEmergencial(${i})">R$10</button>
+                        <button class="small" onclick="excluir(${i})">X</button>
                     </td>
                 </tr>
             `;
         });
+        // Essas chamadas são importantes para manter as outras tabelas sincronizadas
+        renderizarPagos();
+        renderizarNaoColetados();
     }
     
     function renderizarPagos() {
+        const tabelaPagos = document.getElementById("tabela-pagos");
+        const tabelaNaoPagos = document.getElementById("tabela-naoPagos");
+        tabelaPagos.innerHTML = "";
+        tabelaNaoPagos.innerHTML = "";
+
+        const listaTelefones = document.getElementById("listaTelefones");
+        listaTelefones.innerHTML = "";
+        let telefonesNaoPagos = [];
+
         const pagos = entregas.filter(e => e.pago);
         const naoPagos = entregas.filter(e => !e.pago);
-        
-        document.getElementById("tabela-pagos").innerHTML = pagos.length > 0
-            ? pagos.map(e => `
-                <tr>
-                    <td>${e.nome}</td>
-                    <td>${e.telefone || '-'}</td>
-                    <td>${e.descricao || '-'}</td>
-                    <td>R$ ${e.valor.toFixed(2)}</td>
-                    <td>${e.pagamento}</td>
-                    <td>Sim</td>
-                    <td>${e.data}</td>
-                </tr>`).join("")
-            : `<tr><td colspan='7'>Nenhum registro de pago.</td></tr>`;
-        
-        document.getElementById("tabela-naoPagos").innerHTML = naoPagos.length > 0
-            ? naoPagos.map(e => {
-                const telefoneLimpo = (e.telefone || "").replace(/\D/g, '');
-                const mensagem = encodeURIComponent(
-                    `Olá ${e.nome}, tudo bem? 😄\n\nVocê ficou com um valor pendente de R$ ${e.valor.toFixed(2)} referente à entrega: ${e.descricao || "sem descrição"}.\n\nSegue o PIX CNPJ para pagamento:\n📌 57.223.461/0001-40\n🔹 Nome: Larissa Pires da Cunha\n\nQualquer dúvida, fico à disposição!`
-                );
-                const linkWhatsapp = telefoneLimpo ? `https://wa.me/55${telefoneLimpo}?text=${mensagem}` : "#";
-                return `
+
+        if (pagos.length === 0) {
+            tabelaPagos.innerHTML = `<tr><td colspan='7'>Nenhum cliente pago no momento.</td></tr>`;
+        } else {
+            pagos.forEach(e => {
+                tabelaPagos.innerHTML += `
                     <tr>
                         <td>${e.nome}</td>
                         <td>${e.telefone || '-'}</td>
                         <td>${e.descricao || '-'}</td>
                         <td>R$ ${e.valor.toFixed(2)}</td>
-                        <td>Não</td>
+                        <td>${e.pagamento || '-'}</td>
+                        <td>${e.pago ? 'Sim' : 'Não'}</td>
                         <td>${e.data}</td>
-                        <td>
-                            ${telefoneLimpo
-                                ? `<a href="${linkWhatsapp}" target="_blank">
-                                    <button class="small">💬 WhatsApp</button>
-                                </a>`
-                                : '-'}
-                        </td>
-                    </tr>`;
-                }).join("")
-            : `<tr><td colspan='7'>Nenhum registro de não pago.</td></tr>`;
-        
-        const telefones = naoPagos.map(e => e.telefone?.replace(/\D/g, '')).filter(t => t).join(', ');
-        document.getElementById("listaTelefones").textContent = telefones || "Nenhum telefone disponível.";
+                    </tr>
+                `;
+            });
+        }
+
+        if (naoPagos.length === 0) {
+            tabelaNaoPagos.innerHTML = `<tr><td colspan='6'>Nenhum cliente não pago no momento.</td></tr>`;
+        } else {
+            naoPagos.forEach(e => {
+                tabelaNaoPagos.innerHTML += `
+                    <tr>
+                        <td>${e.nome}</td>
+                        <td>${e.telefone || '-'}</td>
+                        <td>${e.descricao || '-'}</td>
+                        <td>R$ ${e.valor.toFixed(2)}</td>
+                        <td>${e.pago ? 'Sim' : 'Não'}</td>
+                        <td>${e.data}</td>
+                    </tr>
+                `;
+                if (e.telefone) {
+                    telefonesNaoPagos.push(e.telefone);
+                }
+            });
+        }
+        listaTelefones.textContent = telefonesNaoPagos.join(', ');
+    }
+
+    // NOVA FUNÇÃO PARA RENDERIZAR NÃO COLETADOS
+    function renderizarNaoColetados() {
+        const tabelaNaoColetados = document.getElementById("tabela-naoColetados");
+        tabelaNaoColetados.innerHTML = "";
+        const naoColetados = entregas.filter(e => !e.coletado); // Filtra os não coletados
+
+        const listaTelefonesNaoColetados = document.getElementById("listaTelefonesNaoColetados");
+        listaTelefonesNaoColetados.innerHTML = "";
+
+        if (naoColetados.length === 0) {
+            tabelaNaoColetados.innerHTML = `<tr><td colspan='6'>Nenhuma mercadoria não coletada no momento.</td></tr>`;
+            return;
+        }
+
+        let telefones = [];
+        naoColetados.forEach((e) => { // Removido o 'i' aqui, pois não precisamos do índice do array filtrado, mas sim do original
+            // Encontra o índice original no array 'entregas' para as funções de ação
+            const originalIndex = entregas.findIndex(item => item === e);
+            
+            tabelaNaoColetados.innerHTML += `
+                <tr>
+                    <td>${e.nome}</td>
+                    <td>${e.telefone || '-'}</td>
+                    <td>${e.descricao || '-'}</td>
+                    <td>R$ ${e.valor.toFixed(2)}</td>
+                    <td>${e.data}</td>
+                    <td>
+                        <button class="small" onclick="toggleColetado(${originalIndex})">Marcar Coletado</button>
+                        <button class="small" onclick="excluir(${originalIndex})">X</button>
+                    </td>
+                </tr>
+            `;
+            if (e.telefone) {
+                telefones.push(e.telefone);
+            }
+        });
+
+        listaTelefonesNaoColetados.textContent = telefones.join(', ');
     }
     
     function calcularCaixa() {
-        const total = entregas.reduce((s, e) => s + e.valor, 0);
-        const emergenciais = entregas.filter(e => e.emergencial).length * 10;
-        const subtotal = total - emergenciais;
+        // Seu código existente para calcular caixa
+        const totalBruto = entregas.reduce((acc, e) => acc + e.valor, 0);
+        const emergencialTotal = entregas.filter(e => e.emergencial).length * 10;
+        const subtotal = totalBruto + emergencialTotal;
         const comissao = subtotal * 0.22;
-        
-        document.getElementById("totalBruto").textContent = total.toFixed(2);
-        document.getElementById("emergencialTotal").textContent = emergenciais.toFixed(2);
+
+        document.getElementById("totalBruto").textContent = totalBruto.toFixed(2);
+        document.getElementById("emergencialTotal").textContent = emergencialTotal.toFixed(2);
         document.getElementById("subtotal").textContent = subtotal.toFixed(2);
         document.getElementById("comissao").textContent = comissao.toFixed(2);
     }
     
     function aplicarFiltroHistorico() {
-        const dataInicio = document.getElementById("filtroDataInicio").value;
-        const dataFim = document.getElementById("filtroDataFim").value;
+        const inicio = document.getElementById("filtroDataInicio").value;
+        const fim = document.getElementById("filtroDataFim").value;
+        const historicoDiv = document.getElementById("historico");
+        historicoDiv.innerHTML = "";
 
-        const tsInicio = dataInicio ? new Date(dataInicio).setHours(0,0,0,0) : null;
-        const tsFim = dataFim ? new Date(dataFim).setHours(23,59,59,999) : null;
-
-        const div = document.getElementById("historico");
-
-        historicoFiltradoAtual = historico.filter(h => {
-            const tsSemana = new Date(h.semana).getTime();
-            if (tsInicio && tsSemana < tsInicio) return false;
-            if (tsFim && tsSemana > tsFim) return false;
-            return true;
-        });
-
-        if (historicoFiltradoAtual.length === 0) {
-            div.innerHTML = "<p style='font-style: italic; color: #666; text-align:center;'>Nenhum registro encontrado para este intervalo de datas.</p>";
+        if (historico.length === 0) {
+            historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum histórico registrado.</p>`;
             return;
         }
 
-        div.innerHTML = historicoFiltradoAtual.map((h, semanaIndex) => {
-            let linhas = h.dados.map((d, i) => `
-                <tr>
-                    <td><input type="checkbox" class="checkbox-registro" data-semana="${semanaIndex}" data-index="${i}" aria-label="Selecionar registro"/></td>
-                    <td>${d.nome}</td>
-                    <td>${d.telefone || '-'}</td>
-                    <td>${d.descricao || '-'}</td>
-                    <td>R$ ${d.valor.toFixed(2)}</td>
-                    <td>${d.pago ? "Sim" : "Não"}</td>
-                    <td>${d.pagamento || "-"}</td>
-                    <td>${d.data}</td>
-                    <td><button onclick="apagarRegistro(${semanaIndex}, ${i})" class="small" aria-label="Apagar registro">🗑️</button></td>
-                </tr>
-            `).join("");
+        let resultadosFiltrados = [];
 
-            const totalCaixaSemana = calcularTotal(h.caixaLancamentos || []);
-            const totalGasolinaSemana = calcularTotal(h.gasolinaLancamentos || []);
+        historico.forEach((semanaRecord, semanaIndex) => {
+            const dataSemana = new Date(semanaRecord.semana);
+            const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
+            const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
 
-            let extrasInfo = '';
-            if (totalCaixaSemana > 0 || totalGasolinaSemana > 0) {
-                extrasInfo += `<p style="margin-top: 10px; font-size: 0.9em; color: #555;">`;
-                if (totalCaixaSemana > 0) {
-                    extrasInfo += `Total Caixa: R$ ${totalCaixaSemana.toFixed(2)}`;
-                }
-                if (totalCaixaSemana > 0 && totalGasolinaSemana > 0) {
-                    extrasInfo += ` | `;
-                }
-                if (totalGasolinaSemana > 0) {
-                    extrasInfo += `Total Gasolina: R$ ${totalGasolinaSemana.toFixed(2)}`;
-                }
-                extrasInfo += `</p>`;
+            let incluirSemana = true;
+            if (dataInicio && dataSemana < dataInicio) {
+                incluirSemana = false;
+            }
+            if (dataFim && dataSemana > dataFim) {
+                incluirSemana = false;
             }
 
-            return `
-                <h3 style="text-align: center; margin-top: 30px; margin-bottom: 15px; color: #333;">
-                    Semana de ${new Date(h.semana).toLocaleDateString('pt-BR')}
-                </h3>
-                <table aria-describedby="Registros da semana de ${new Date(h.semana).toLocaleDateString('pt-BR')}">
+            if (incluirSemana) {
+                resultadosFiltrados.push({ ...semanaRecord, originalIndex: semanaIndex });
+            }
+        });
+
+        historicoFiltradoAtual = resultadosFiltrados; // Guarda para apagar filtrados
+
+        if (resultadosFiltrados.length === 0) {
+            historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum registro encontrado para o período selecionado.</p>`;
+            return;
+        }
+
+        resultadosFiltrados.forEach((semanaRecord, idx) => {
+            const semanaTitulo = `Semana de ${new Date(semanaRecord.semana).toLocaleDateString('pt-BR')}`;
+            let semanaContent = `<h3>${semanaTitulo}</h3>`;
+
+            // Adiciona totais da semana
+            const totalBrutoSemana = semanaRecord.dados.reduce((acc, e) => acc + e.valor, 0);
+            const emergencialSemana = semanaRecord.dados.filter(e => e.emergencial).length * 10;
+            const subtotalSemana = totalBrutoSemana + emergencialSemana;
+            const comissaoSemana = subtotalSemana * 0.22;
+
+            semanaContent += `
+                <div class="resumo-extra" style="border-top: none; padding-top: 0;">
+                    <p>Total Bruto: <strong>R$ ${totalBrutoSemana.toFixed(2)}</strong></p>
+                    <p>Emergenciais: <strong>R$ ${emergencialSemana.toFixed(2)}</strong></p>
+                    <p>Subtotal: <strong>R$ ${subtotalSemana.toFixed(2)}</strong></p>
+                    <p>Comissão: <strong>R$ ${comissaoSemana.toFixed(2)}</strong></p>
+                </div>
+            `;
+
+            // Adiciona tabela de entregas da semana
+            semanaContent += `
+                <table style="width: 100%; margin-top: 10px;">
                     <thead>
                         <tr>
-                            <th>Sel.</th>
+                            <th><input type="checkbox" onchange="toggleSelectAllHistorico(this, ${idx})" aria-label="Selecionar todos da semana" /></th>
                             <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Descrição</th>
                             <th>Valor (R$)</th>
                             <th>Pago</th>
-                            <th>Pagamento</th>
-                            <th>Data</th>
-                            <th>Ações</th>
+                            <th>Coletado</th> <th>Data</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${linhas}
-                    </tbody>
-                </table>
-                ${extrasInfo}
             `;
-        }).join("");
+            if (semanaRecord.dados.length === 0) {
+                semanaContent += `<tr><td colspan="6">Nenhum registro de entrega para esta semana.</td></tr>`;
+            } else {
+                semanaRecord.dados.forEach((entrega, entregaIdx) => {
+                    semanaContent += `
+                        <tr>
+                            <td><input type="checkbox" class="historico-checkbox" data-semana-idx="${idx}" data-entrega-idx="${entregaIdx}" aria-label="Selecionar registro" /></td>
+                            <td>${entrega.nome}</td>
+                            <td>R$ ${entrega.valor.toFixed(2)}</td>
+                            <td>${entrega.pago ? 'Sim' : 'Não'}</td>
+                            <td>${entrega.coletado ? 'Sim' : 'Não'}</td> <td>${entrega.data}</td>
+                        </tr>
+                    `;
+                });
+            }
+            semanaContent += `</tbody></table>`;
+
+            // Adiciona detalhes de caixa e gasolina da semana
+            const totalCaixaSemana = calcularTotal(semanaRecord.caixaLancamentos);
+            const totalGasolinaSemana = calcularTotal(semanaRecord.gasolinaLancamentos);
+
+            semanaContent += `
+                <div class="resumo-extra">
+                    <p>Total Caixa (troco): <strong id="caixaResumoTotalSemana_${idx}">R$ ${totalCaixaSemana.toFixed(2)}</strong></p>
+                    <div class="detalhes-container">
+                        <h4>Detalhes do Caixa (troco) da Semana</h4>
+                        <ul>
+            `;
+            if (semanaRecord.caixaLancamentos && semanaRecord.caixaLancamentos.length > 0) {
+                semanaRecord.caixaLancamentos.forEach(item => {
+                    semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
+                });
+            } else {
+                semanaContent += `<li>Nenhum lançamento de caixa para esta semana.</li>`;
+            }
+            semanaContent += `
+                        </ul>
+                    </div>
+                    <p style="margin-top:10px;">Total Gasolina: <strong id="gasolinaResumoTotalSemana_${idx}">R$ ${totalGasolinaSemana.toFixed(2)}</strong></p>
+                    <div class="detalhes-container">
+                        <h4>Detalhes da Gasolina da Semana</h4>
+                        <ul>
+            `;
+            if (semanaRecord.gasolinaLancamentos && semanaRecord.gasolinaLancamentos.length > 0) {
+                semanaRecord.gasolinaLancamentos.forEach(item => {
+                    semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
+                });
+            } else {
+                semanaContent += `<li>Nenhum lançamento de gasolina para esta semana.</li>`;
+            }
+            semanaContent += `
+                        </ul>
+                    </div>
+                </div>
+            `;
+            historicoDiv.innerHTML += `<div class="historico-semana">${semanaContent}</div>`;
+        });
     }
 
-    function apagarRegistro(semanaIndex, registroIndex) {
-        if (!confirm("Tem certeza que deseja apagar este registro?")) return;
-
-        // O historicoFiltradoAtual contém os índices do array original `historico`
-        // Precisamos encontrar o objeto semana correto no array `historico`
-        const semanaReal = historicoFiltradoAtual[semanaIndex]; 
-        if (semanaReal) {
-            // Encontra o índice real da semana no array `historico`
-            const realSemanaIdx = historico.findIndex(h => h.semana === semanaReal.semana);
-
-            if (realSemanaIdx !== -1) {
-                historico[realSemanaIdx].dados.splice(registroIndex, 1);
-                
-                // Se a semana ficar vazia após a exclusão do último registro, remova a semana
-                if (historico[realSemanaIdx].dados.length === 0 &&
-                    (!historico[realSemanaIdx].caixaLancamentos || historico[realSemanaIdx].caixaLancamentos.length === 0) &&
-                    (!historico[realSemanaIdx].gasolinaLancamentos || historico[realSemanaIdx].gasolinaLancamentos.length === 0)) {
-                    historico.splice(realSemanaIdx, 1);
-                }
-                
-                localStorage.setItem("historico", JSON.stringify(historico));
-                aplicarFiltroHistorico(); // Re-renderiza o histórico
-            }
-        }
+    // Funções de manipulação do histórico
+    function toggleSelectAllHistorico(checkbox, semanaIndex) {
+        const checkboxes = document.querySelectorAll(`#historico [data-semana-idx="${semanaIndex}"]`);
+        checkboxes.forEach(cb => cb.checked = checkbox.checked);
     }
 
     function apagarSelecionados() {
         if (!confirm("Tem certeza que deseja apagar os registros selecionados?")) return;
 
-        const checkboxes = document.querySelectorAll('.checkbox-registro:checked');
-        if (checkboxes.length === 0) {
-            alert("Nenhum registro selecionado.");
-            return;
-        }
+        const checkboxes = document.querySelectorAll('.historico-checkbox:checked');
+        const paraRemover = []; // Array de objetos { semanaIndex, entregaIndex }
 
-        // Criar um set de índices únicos para as semanas a serem verificadas
-        const semanasParaVerificar = new Set();
+        checkboxes.forEach(cb => {
+            const semanaIdx = parseInt(cb.dataset.semanaIdx);
+            const entregaIdx = parseInt(cb.dataset.entregaIdx);
+            paraRemover.push({ semanaIdx, entregaIdx });
+        });
 
-        // Processar os registros de trás para frente para evitar problemas de índice
-        Array.from(checkboxes).reverse().forEach(checkbox => {
-            const semanaIndex = parseInt(checkbox.dataset.semana);
-            const registroIndex = parseInt(checkbox.dataset.index);
+        // Agrupa por semana para remover de trás para frente e não bagunçar os índices
+        const agrupadoPorSemana = paraRemover.reduce((acc, item) => {
+            acc[item.semanaIdx] = acc[item.semanaIdx] || [];
+            acc[item.semanaIdx].push(item.entregaIdx);
+            return acc;
+        }, {});
 
-            const semanaReal = historicoFiltradoAtual[semanaIndex];
-            if (semanaReal) {
-                const realSemanaIdx = historico.findIndex(h => h.semana === semanaReal.semana);
-                if (realSemanaIdx !== -1) {
-                    historico[realSemanaIdx].dados.splice(registroIndex, 1);
-                    semanasParaVerificar.add(realSemanaIdx); // Adiciona a semana para verificação posterior
+        for (const semanaIdxStr in agrupadoPorSemana) {
+            const semanaIdx = parseInt(semanaIdxStr);
+            // Ordena os índices das entregas em ordem decrescente para remover sem problemas
+            const indicesEntregas = agrupadoPorSemana[semanaIdx].sort((a, b) => b - a);
+
+            indicesEntregas.forEach(entregaIdx => {
+                if (historico[semanaIdx] && historico[semanaIdx].dados) {
+                    historico[semanaIdx].dados.splice(entregaIdx, 1);
                 }
-            }
-        });
-
-        // Após apagar todos os registros, verificar e remover semanas vazias
-        // Processar de trás para frente aqui também, caso múltiplas semanas se tornem vazias
-        const sortedSemanas = Array.from(semanasParaVerificar).sort((a, b) => b - a);
-        sortedSemanas.forEach(idx => {
-            if (historico[idx].dados.length === 0 &&
-                (!historico[idx].caixaLancamentos || historico[idx].caixaLancamentos.length === 0) &&
-                (!historico[idx].gasolinaLancamentos || historico[idx].gasolinaLancamentos.length === 0)) {
-                historico.splice(idx, 1);
-            }
-        });
+            });
+            // Se a semana ficar vazia de entregas, você pode considerar removê-la,
+            // mas o código atual mantém a semana vazia para mostrar outros dados (caixa, gasolina)
+        }
 
         localStorage.setItem("historico", JSON.stringify(historico));
         aplicarFiltroHistorico(); // Re-renderiza o histórico
@@ -1166,60 +1270,56 @@
     }
 
     function apagarFiltrados() {
-        if (!confirm("Tem certeza que deseja apagar TODOS os registros atualmente filtrados?")) return;
+        if (!confirm("Tem certeza que deseja apagar TODOS os registros filtrados?")) return;
 
-        if (historicoFiltradoAtual.length === 0) {
-            alert("Não há registros filtrados para apagar.");
-            return;
-        }
+        // Cria uma lista dos índices originais das semanas que *não* estão no filtro atual
+        const semanasParaManter = historico.filter((_, idx) => {
+            return !historicoFiltradoAtual.some(filteredRecord => filteredRecord.originalIndex === idx);
+        });
 
-        // Criar um array de IDs de semanas a serem removidas ou modificadas
-        const semanasParaRemover = historicoFiltradoAtual.map(h => h.semana);
+        historico = semanasParaManter; // Substitui o histórico pelo que deve ser mantido
 
-        // Filtrar o histórico original, mantendo apenas as semanas que NÃO estão no filtro atual
-        historico = historico.filter(h => !semanasParaRemover.includes(h.semana));
-        
         localStorage.setItem("historico", JSON.stringify(historico));
-        aplicarFiltroHistorico(); // Re-renderiza o histórico (que agora estará vazio se tudo foi apagado)
+        aplicarFiltroHistorico(); // Re-renderiza o histórico, agora vazio ou com menos itens
         alert("Registros filtrados apagados!");
     }
 
     function apagarTodosHistorico() {
-        if (!confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) return;
-        historico = [];
-        localStorage.setItem("historico", "[]");
-        aplicarFiltroHistorico();
-        alert("Todo o histórico de registros foi apagado!");
+        if (confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) {
+            historico = [];
+            localStorage.setItem("historico", "[]");
+            aplicarFiltroHistorico();
+            alert("Todo o histórico de registros foi apagado.");
+        }
     }
 
     function enviarMensagemGeral() {
-        const telefonesString = document.getElementById("listaTelefones").textContent;
-        const telefones = telefonesString.split(', ').filter(t => t); // Filtra telefones vazios
-
-        if (telefones.length === 0) {
-            alert("Não há telefones de clientes não pagos para enviar mensagens.");
+        const naoPagosComTelefone = entregas.filter(e => !e.pago && e.telefone);
+        if (naoPagosComTelefone.length === 0) {
+            alert("Não há clientes não pagos e com telefone registrado para enviar mensagem.");
             return;
         }
 
-        const mensagemBase = encodeURIComponent(
-            `Olá, tudo bem? 😄\n\nGostaríamos de lembrar que você possui um valor pendente referente a entregas conosco. Por favor, regularize o pagamento para evitar cobranças de juros.\n\nSegue o PIX CNPJ para pagamento:\n📌 57.223.461/0001-40\n🔹 Nome: Larissa Pires da Cunha\n\nQualquer dúvida, ficamos à disposição!`
-        );
+        let mensagem = "Olá! Gostaríamos de lembrar que sua pendência conosco ainda não foi paga.\n\nDetalhes:\n";
+        naoPagosComTelefone.forEach(e => {
+            mensagem += `\n- Cliente: ${e.nome}\n  Descrição: ${e.descricao}\n  Valor: R$ ${e.valor.toFixed(2)}\n`;
+        });
+        mensagem += "\nPor favor, entre em contato para regularizar. Obrigado!";
 
-        // Cria o link para enviar para múltiplos contatos (isso geralmente não funciona direto no WhatsApp Web/App,
-        // mas pode ser útil para copiar e colar em listas de transmissão ou apps de terceiros)
-        const link = `https://wa.me/?text=${mensagemBase}`;
-        
-        // Abre o WhatsApp com a mensagem geral.
-        // Em navegadores modernos e no celular, isso tentará abrir o WhatsApp.
-        window.open(link, '_blank');
-
-        alert("Uma janela/aba do WhatsApp será aberta para você enviar a mensagem geral. Copie os telefones se precisar para lista de transmissão.");
+        const confirmSend = confirm("Será gerada uma mensagem geral para os clientes não pagos. Copie a lista de telefones abaixo e cole no WhatsApp. Deseja continuar?");
+        if (confirmSend) {
+            alert("Mensagem pronta. Por favor, copie a lista de telefones e cole no WhatsApp para enviar.");
+        }
     }
-    
-    // Inicialização
-    document.addEventListener("DOMContentLoaded", () => {
-        showPage('principal'); // Mostra a página principal ao carregar
+
+    // Inicializa a renderização quando a página carrega
+    document.addEventListener('DOMContentLoaded', () => {
+        showPage('principal'); // Mostra a página principal por padrão
+        // Se você quiser que o app sempre comece mostrando "principal", "pagos", etc.,
+        // apenas chame a função correspondente aqui:
+        // showPage('principal');
     });
+
 </script>
 
 </body>
