@@ -8,8 +8,8 @@ const urlsToCache = [
   // Se você separar seu JS do HTML, o arquivo .js iria aqui:
   // '/controle-de-entregas/script.js', 
   '/controle-de-entregas/manifest.json',
-  '/controle-de-entregas/icons/icon-192.png',
-  '/controle-de-entregas/icons/icon-512.png'
+  '/controle-de-entregas/icons/icon-192.png', 
+    '/controle-de-entregas/icons/icon-512.png'
   // Adicione outros arquivos importantes, como imagens, fontes, etc.
 ];
 
