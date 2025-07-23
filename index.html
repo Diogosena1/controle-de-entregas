@@ -713,16 +713,6 @@ function enviarMensagemNaoColetadosGeral() {
     }
 }
 
-// **IMPORTANTE:** Certifique-se de que a `renderizarPagos()` e outras funções
-// que atualizam a tela de "não pagos" chamem esta parte:
-// function renderizarPagos() {
-//    // ... sua lógica de renderização
-//    const naoPagosComTelefone = entregas.filter(e => !e.pago && e.telefone);
-//    const telefonesFormatadosParaExibicao = naoPagosComTelefone
-//        .map(e => e.telefone) // Mapeia os telefones originais, pois é apenas para exibição
-//        .join(', ');
-//    document.getElementById('listaTelefones').textContent = telefonesFormatadosParaExibicao || 'Nenhum telefone disponível.';
-// }
     </script>
 </head>
 <body>

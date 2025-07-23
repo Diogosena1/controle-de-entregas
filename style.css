@@ -272,6 +272,7 @@
             display: block;
             overflow-x: auto;
             white-space: nowrap;
+            min-width: 700px
         }
 
         thead {
@@ -281,9 +282,11 @@
         }
 
         thead th {
-            padding: 12px 10px;
+            padding: 12px 15px;
             font-weight: 700;
             border-right: 1px solid #C82333;
+            font-size: 1em;
+            text-align: left;
         }
 
         thead th:last-child {
@@ -300,22 +303,25 @@
         }
 
         tbody td {
-            padding: 10px 8px;
+            padding: 12px 15px;
             border-bottom: 1px solid #ddd;
             vertical-align: middle;
-            text-align: center;
+            text-align: left;
+            font-size: 1em;
+            color: #343a40;
         }
 
         /* Inputs dentro da tabela */
         tbody input[type="text"],
         tbody input[type="number"],
         tbody select {
-            width: 95%;
-            font-size: 14px;
-            padding: 6px 8px;
+            width: 98%;
+            font-size: 1.1em;
+            padding: 12px 15px;
             border-radius: 6px;
             border: 1.6px solid #ccc;
             transition: border-color 0.25s ease;
+            box-sizing: border-box;
         }
 
         tbody input[type="text"]:focus,
@@ -327,8 +333,10 @@
         }
 
         tbody input[type="checkbox"] {
-            transform: scale(1.3);
+            transform: scale(1.4);
             cursor: pointer;
+            margin: 0;
+            vertical-align: middle;
         }
 
         /* Texto para "nenhum registro" */
@@ -589,18 +597,17 @@
             
             /* Ajusta tabelas para mobile */
             table {
-                font-size: 13px;
+                font-size: 0.85em;
             }
             thead th, tbody td {
-                padding: 8px 5px;
+                padding: 8px 10px;
             }
 
             tbody input[type="text"],
             tbody input[type="number"],
             tbody select {
-                width: 90%;
-                font-size: 13px;
-                padding: 5px;
+                font-size: 0.9em;
+                padding: 6px 8px;
             }
 
             .resumo-extra p {
