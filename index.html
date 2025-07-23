@@ -135,9 +135,10 @@
         }
 
         function showPage(id) {
-            ["principal", "pagos", "naoPagos", "naoColetados", "caixa", "registros"].forEach(p => {
-                document.getElementById(p).classList.add("hidden");
-            });
+  const abas = document.querySelectorAll('[role="tabpanel"]');
+  abas.forEach(aba => aba.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  closeNav(); // fecha o menu se estiver no mobile
             document.getElementById(id).classList.remove("hidden");
             if (id === "caixa") {
                 calcularCaixa();
@@ -732,6 +733,7 @@ function enviarMensagemNaoColetadosGeral() {
         <nav id="mainNav" class="main-nav">
             <ul class="nav-list">
                 <li><button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button></li>
+                <li><button onclick="showPage('planilha')" aria-controls="planilha" role="tab">Planilha</button></li>
                 <li><button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button></li>
                 <li><button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button></li>
                 <li><button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button></li>
@@ -758,24 +760,27 @@ function enviarMensagemNaoColetadosGeral() {
                 <button onclick="adicionarEntrega()" aria-label="Adicionar entrega">Adicionar</button>
                 <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Semana</button>
             </div>
-
-            <table aria-describedby="Tabela de entregas principal">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Descrição</th>
-                        <th>Valor (R$)</th>
-                        <th>Pagamento</th>
-                        <th>Pago</th>
-                        <th>Coletado</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-principal"></tbody>
-            </table>
         </div>
+        <div id="planilha" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Planilha de Coletas</h2>
+    <table aria-describedby="Tabela de entregas planilha">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Descrição</th>
+                <th>Valor (R$)</th>
+                <th>Pagamento</th>
+                <th>Pago</th>
+                <th>Coletado</th>
+                <th>Data</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-principal"></tbody>
+    </table>
+</div>
+
 
         <div id="pagos" class="hidden" role="tabpanel" tabindex="0">
             <h2>Clientes Pagos</h2>
@@ -796,25 +801,26 @@ function enviarMensagemNaoColetadosGeral() {
         </div>
 
         <div id="naoPagos" class="hidden" role="tabpanel" tabindex="0">
-    <h2>Clientes Não Pagos</h2>
-    <table aria-describedby="Tabela de clientes não pagos">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Pago</th>
-                <th>Data</th>
-                <th>Ações</th> </tr>
-        </thead>
-        <tbody id="tabela-naoPagos"></tbody>
-    </table>
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
-        <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
-    </div>
-</div>
+            <h2>Clientes Não Pagos</h2>
+            <table aria-describedby="Tabela de clientes não pagos">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Pago</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-naoPagos"></tbody>
+            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+                <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
+            </div>
+        </div>
 
         <div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
             <h2>Mercadorias Não Coletadas</h2>
@@ -896,6 +902,26 @@ function enviarMensagemNaoColetadosGeral() {
             </div>
             
             <div id="historico"></div>
+
+            <h3 style="margin-top: 40px;">Coletas Atuais</h3>
+            <table aria-describedby="Tabela de entregas principal">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Pagamento</th>
+                        <th>Pago</th>
+                        <th>Coletado</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-principal"></tbody>
+            </table>
         </div>
-    </div> </body>
+    </div>
+</body>
+
 </html>
