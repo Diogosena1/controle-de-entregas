@@ -10,330 +10,645 @@
     
     <script>
  if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js') // com ./ no começo!
-    .then(() => console.log("Service Worker registrado com sucesso."))
-    .catch(err => console.error("Erro ao registrar Service Worker:", err));
+    navigator.serviceWorker.register('./service-worker.js') // com ./ no começo!
+        .then(() => console.log("Service Worker registrado com sucesso."))
+        .catch(err => console.error("Erro ao registrar Service Worker:", err));
 }
 
-        let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
-        let historico = JSON.parse(localStorage.getItem("historico") || "[]");
-        let historicoFiltradoAtual = [];
+let entregas = JSON.parse(localStorage.getItem("entregas") || "[]");
+// Historico agora armazena entregas individuais com um 'id' para facilitar a edição
+// e a 'semanaId' para agrupar, se necessário para a exibição original.
+let historico = JSON.parse(localStorage.getItem("historico") || "[]");
 
-        let caixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
-        if (!Array.isArray(caixaTroco)) {
-            caixaTroco = [];
-        }
+let contatos = JSON.parse(localStorage.getItem("contatos") || "[]"); // NOVO: Array de contatos
 
-        let gasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
-        if (!Array.isArray(gasolinaValor)) {
-            gasolinaValor = [];
-        }
-
-        function salvarCaixa() {
-            const valor = parseFloat(document.getElementById('inputCaixaValor').value);
-            const data = document.getElementById('inputCaixaData').value;
-
-            if (isNaN(valor) || valor <= 0) {
-                alert("Por favor, insira um valor numérico positivo para o caixa.");
-                return;
+// Certifique-se de que o histórico tem a estrutura esperada (flat array de entregas com IDs)
+// Adicionei uma lógica para migração simples se 'historico' ainda estiver no formato antigo de semanas aninhadas.
+if (historico.length > 0 && historico[0].semana && historico[0].dados) {
+    let flatHistorico = [];
+    historico.forEach(week => {
+        week.dados.forEach(item => {
+            // Garante que cada item no histórico tenha um ID.
+            if (!item.id) {
+                item.id = Date.now().toString() + Math.random().toString(36).substring(2, 9); // Gera um ID único
             }
-            if (!data) {
-                alert("Por favor, selecione uma data para o caixa.");
-                return;
-            }
-
-            caixaTroco.push({ valor, data });
-            localStorage.setItem('caixaTroco', JSON.stringify(caixaTroco));
-            atualizarCaixaGasolina();
-            alert(`Valor do caixa salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
-            document.getElementById('inputCaixaValor').value = '';
-            document.getElementById('inputCaixaData').value = '';
+            // Adiciona uma referência à semana original se necessário para exibição agrupada
+            // ou se quiser manter a informação de qual semana veio.
+            // flatHistorico.push({...item, semanaOriginal: week.semana});
+            flatHistorico.push(item);
+        });
+    });
+    historico = flatHistorico;
+    localStorage.setItem("historico", JSON.stringify(historico)); // Salva o novo formato
+    console.log("Histórico migrado para o novo formato de array plano.");
+} else if (historico.length > 0 && !historico[0].id) {
+    // Se já é um array plano, mas sem IDs, adicione IDs.
+    historico = historico.map(item => {
+        if (!item.id) {
+            item.id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         }
+        return item;
+    });
+    localStorage.setItem("historico", JSON.stringify(historico));
+    console.log("IDs adicionados a registros existentes no histórico.");
+}
 
-        function salvarGasolina() {
-            const valor = parseFloat(document.getElementById('inputGasolinaValor').value);
-            const data = document.getElementById('inputGasolinaData').value;
 
-            if (isNaN(valor) || valor <= 0) {
-                alert("Por favor, insira um valor numérico positivo para a gasolina.");
-                return;
-            }
-            if (!data) {
-                alert("Por favor, selecione uma data para a gasolina.");
-                return;
-            }
+let historicoFiltradoAtual = []; // Usado para operações em massa de registros visíveis
 
-            gasolinaValor.push({ valor, data });
-            localStorage.setItem('gasolinaValor', JSON.stringify(gasolinaValor));
-            atualizarCaixaGasolina();
-            alert(`Valor da gasolina salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
-            document.getElementById('inputGasolinaValor').value = '';
-            document.getElementById('inputGasolinaData').value = '';
-        }
+let caixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
+if (!Array.isArray(caixaTroco)) {
+    caixaTroco = [];
+}
 
-        function formatarDataParaExibicao(dataIso) {
-            if (!dataIso) return '-';
-            const [ano, mes, dia] = dataIso.split('-');
+let gasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
+if (!Array.isArray(gasolinaValor)) {
+    gasolinaValor = [];
+}
+
+// Helper para gerar IDs únicos
+function generateUniqueId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+}
+
+
+function salvarCaixa() {
+    const valor = parseFloat(document.getElementById('inputCaixaValor').value);
+    const data = document.getElementById('inputCaixaData').value;
+
+    if (isNaN(valor) || valor <= 0) {
+        alert("Por favor, insira um valor numérico positivo para o caixa.");
+        return;
+    }
+    if (!data) {
+        alert("Por favor, selecione uma data para o caixa.");
+        return;
+    }
+
+    caixaTroco.push({ valor, data });
+    localStorage.setItem('caixaTroco', JSON.stringify(caixaTroco));
+    atualizarCaixaGasolina();
+    alert(`Valor do caixa salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
+    document.getElementById('inputCaixaValor').value = '';
+    document.getElementById('inputCaixaData').value = '';
+}
+
+function salvarGasolina() {
+    const valor = parseFloat(document.getElementById('inputGasolinaValor').value);
+    const data = document.getElementById('inputGasolinaData').value;
+
+    if (isNaN(valor) || valor <= 0) {
+        alert("Por favor, insira um valor numérico positivo para a gasolina.");
+        return;
+    }
+    if (!data) {
+        alert("Por favor, selecione uma data para a gasolina.");
+        return;
+    }
+
+    gasolinaValor.push({ valor, data });
+    localStorage.setItem('gasolinaValor', JSON.stringify(gasolinaValor));
+    atualizarCaixaGasolina();
+    alert(`Valor da gasolina salvo: R$ ${valor.toFixed(2)} | Data: ${formatarDataParaExibicao(data)}`);
+    document.getElementById('inputGasolinaValor').value = '';
+    document.getElementById('inputGasolinaData').value = '';
+}
+
+ 
+
+function formatarDataParaExibicao(dataIso) {
+    if (!dataIso) return '-';
+    // Se a data já vem formatada (ex: dd/mm/aaaa hh:mm:ss) ou é só data (yyyy-mm-dd)
+    // Tenta primeiro parsear como ISO (yyyy-mm-dd) ou manter como está
+    try {
+        const datePart = dataIso.includes(' ') ? dataIso.split(' ')[0] : dataIso; // Pega só a parte da data se tiver hora
+        const [ano, mes, dia] = datePart.split('-');
+        if (ano && mes && dia) { // Se parece um formato yyyy-mm-dd
             return `${dia}/${mes}/${ano}`;
         }
+    } catch (e) {
+        // Fallback se o formato não for yyyy-mm-dd
+    }
+    // Se não for yyyy-mm-dd, tenta formatar como data completa ou retorna como está
+    const dateObj = new Date(dataIso);
+    if (!isNaN(dateObj.getTime())) { // Verifica se é uma data válida
+        return dateObj.toLocaleDateString('pt-BR');
+    }
+    return dataIso; // Retorna o original se não conseguir formatar
+}
 
-        function calcularTotal(arr) {
-            if (!Array.isArray(arr)) {
-                return 0;
-            }
-            return arr.reduce((acc, item) => acc + item.valor, 0);
+
+function calcularTotal(arr) {
+    if (!Array.isArray(arr)) {
+        return 0;
+    }
+    return arr.reduce((acc, item) => acc + item.valor, 0);
+}
+
+function atualizarCaixaGasolina() {
+    let tempCaixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
+    caixaTroco = Array.isArray(tempCaixaTroco) ? tempCaixaTroco : [];
+
+    let tempGasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
+    gasolinaValor = Array.isArray(tempGasolinaValor) ? tempGasolinaValor : [];
+
+    document.getElementById('caixaResumoTotal').innerHTML = `R$ ${calcularTotal(caixaTroco).toFixed(2)}`;
+    document.getElementById('gasolinaResumoTotal').innerHTML = `R$ ${calcularTotal(gasolinaValor).toFixed(2)}`;
+
+    document.getElementById('inputCaixaValor').value = '';
+    document.getElementById('inputCaixaData').value = '';
+    document.getElementById('inputGasolinaValor').value = '';
+    document.getElementById('inputGasolinaData').value = '';
+
+    renderizarDetalhes('caixa');
+    renderizarDetalhes('gasolina');
+}
+
+function toggleDetalhes(tipo) {
+    const detalhesDiv = document.getElementById(`detalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    detalhesDiv.classList.toggle('hidden');
+    renderizarDetalhes(tipo);
+}
+
+function renderizarDetalhes(tipo) {
+    const listaUl = document.getElementById(`listaDetalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    listaUl.innerHTML = '';
+    const dados = tipo === 'caixa' ? caixaTroco : gasolinaValor;
+
+    if (!Array.isArray(dados)) {
+        listaUl.innerHTML = '<li>Erro: Dados de lançamento não são válidos.</li>';
+        return;
+    }
+
+    if (dados.length === 0) {
+        listaUl.innerHTML = '<li>Nenhum lançamento registrado para esta semana.</li>';
+        return;
+    }
+
+    dados.forEach(item => {
+        listaUl.innerHTML += `
+            <li>
+                <span>${formatarDataParaExibicao(item.data)}</span>
+                <span class="valor">R$ ${item.valor.toFixed(2)}</span>
+            </li>
+        `;
+    });
+}
+// FUNÇÕES DE GERENCIAMENTO DE CONTATOS
+    function salvarContatos() {
+        localStorage.setItem("contatos", JSON.stringify(contatos));
+        renderizarContatos();
+        atualizarDatalistNomes(); // Atualiza o datalist de nomes após salvar
+    }
+
+    function adicionarContato() {
+        const nomeContatoInput = document.getElementById("nomeContato");
+        const telefoneContatoInput = document.getElementById("telefoneContato");
+
+        const nome = nomeContatoInput.value.trim();
+        const telefone = telefoneContatoInput.value.trim();
+
+        if (!nome || !telefone) {
+            alert("Por favor, preencha o nome e o telefone do contato.");
+            return;
         }
 
-        function atualizarCaixaGasolina() {
-            let tempCaixaTroco = JSON.parse(localStorage.getItem('caixaTroco'));
-            caixaTroco = Array.isArray(tempCaixaTroco) ? tempCaixaTroco : [];
-
-            let tempGasolinaValor = JSON.parse(localStorage.getItem('gasolinaValor'));
-            gasolinaValor = Array.isArray(tempGasolinaValor) ? tempGasolinaValor : [];
-
-            document.getElementById('caixaResumoTotal').innerHTML = `R$ ${calcularTotal(caixaTroco).toFixed(2)}`;
-            document.getElementById('gasolinaResumoTotal').innerHTML = `R$ ${calcularTotal(gasolinaValor).toFixed(2)}`;
-        
-            document.getElementById('inputCaixaValor').value = '';
-            document.getElementById('inputCaixaData').value = '';
-            document.getElementById('inputGasolinaValor').value = '';
-            document.getElementById('inputGasolinaData').value = '';
-
-            renderizarDetalhes('caixa');
-            renderizarDetalhes('gasolina');
+        // Verifica se o contato já existe para evitar duplicatas simples
+        const contatoExistente = contatos.find(c => c.nome === nome && c.telefone === telefone);
+        if (contatoExistente) {
+            alert("Este contato já existe.");
+            return;
         }
 
-        function toggleDetalhes(tipo) {
-            const detalhesDiv = document.getElementById(`detalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
-            detalhesDiv.classList.toggle('hidden');
-            renderizarDetalhes(tipo);
+        contatos.push({ id: generateUniqueId(), nome, telefone }); // Adiciona um ID único
+        salvarContatos();
+
+        nomeContatoInput.value = "";
+        telefoneContatoInput.value = "";
+    }
+
+    function renderizarContatos() {
+        const tabelaContatosBody = document.getElementById("tabela-contatos");
+        if (!tabelaContatosBody) return; // Garante que o elemento existe
+
+        tabelaContatosBody.innerHTML = ""; // Limpa a tabela antes de renderizar
+
+        if (contatos.length === 0) {
+            tabelaContatosBody.innerHTML = `<tr><td colspan='3'>Nenhum contato salvo.</td></tr>`;
+            return;
         }
 
-        function renderizarDetalhes(tipo) {
-            const listaUl = document.getElementById(`listaDetalhes${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
-            listaUl.innerHTML = '';
-            const dados = tipo === 'caixa' ? caixaTroco : gasolinaValor;
+        contatos.forEach(contato => {
+            const row = tabelaContatosBody.insertRow();
+            row.innerHTML = `
+                <td>${contato.nome}</td>
+                <td>${contato.telefone}</td>
+                <td>
+                    <button class="small" onclick="apagarContato('${contato.id}')">Apagar</button>
+                </td>
+            `;
+        });
+    }
 
-            if (!Array.isArray(dados)) {
-                listaUl.innerHTML = '<li>Erro: Dados de lançamento não são válidos.</li>';
-                return;
-            }
+    function apagarContato(id) {
+        if (confirm("Tem certeza que deseja apagar este contato?")) {
+            contatos = contatos.filter(contato => contato.id !== id);
+            salvarContatos();
+        }
+    }
 
-            if (dados.length === 0) {
-                listaUl.innerHTML = '<li>Nenhum lançamento registrado para esta semana.</li>';
-                return;
-            }
+    // Função para atualizar o datalist de nomes para o autocomplete
+    function atualizarDatalistNomes() {
+        const datalist = document.getElementById('nomesContatos');
+        if (!datalist) {
+             console.warn("Datalist 'nomesContatos' não encontrado. Autocomplete de contatos não funcionará.");
+             return;
+        }
+        datalist.innerHTML = ''; // Limpa as opções existentes
+        contatos.forEach(contato => {
+            const option = document.createElement('option');
+            option.value = contato.nome;
+            datalist.appendChild(option);
+        });
+    }
 
-            dados.forEach(item => {
-                listaUl.innerHTML += `
-                    <li>
-                        <span>${formatarDataParaExibicao(item.data)}</span>
-                        <span class="valor">R$ ${item.valor.toFixed(2)}</span>
-                    </li>
-                `;
-            });
+    // Função para lidar com a seleção de contato do datalist
+    function selecionarContatoDoDatalist() {
+        const nomeInput = document.getElementById('nome');
+        const telefoneInput = document.getElementById('telefone');
+        const nomeSelecionado = nomeInput.value;
+
+        const contatoEncontrado = contatos.find(c => c.nome === nomeSelecionado);
+        if (contatoEncontrado) {
+            telefoneInput.value = contatoEncontrado.telefone;
+        } else {
+            telefoneInput.value = ''; // Limpa o telefone se o nome não corresponder a um contato salvo
+        }
+    }
+
+    // NOVO: Adicione o evento de 'input' ao campo de nome para o autocomplete
+    document.addEventListener('DOMContentLoaded', () => {
+        // ... seu código DOMContentLoaded existente ...
+
+        const nomeCampoPrincipal = document.getElementById('nome');
+        if (nomeCampoPrincipal) {
+            nomeCampoPrincipal.setAttribute('list', 'nomesContatos'); // Garante que o input 'nome' usa o datalist
+            nomeCampoPrincipal.addEventListener('input', selecionarContatoDoDatalist);
         }
 
-        function showPage(id) {
-  const abas = document.querySelectorAll('[role="tabpanel"]');
-  abas.forEach(aba => aba.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  closeNav(); // fecha o menu se estiver no mobile
-            document.getElementById(id).classList.remove("hidden");
-            if (id === "caixa") {
-                calcularCaixa();
-                atualizarCaixaGasolina();
-            } else {
-                document.getElementById('detalhesCaixa').classList.add('hidden');
-                document.getElementById('detalhesGasolina').classList.add('hidden');
-            }
-            if (id === "registros") {
-                document.getElementById("filtroDataInicio").value = "";
-                document.getElementById("filtroDataFim").value = "";
-                aplicarFiltroHistorico();
-            }
-            if (id === "pagos" || id === "naoPagos") renderizarPagos();
-            if (id === "naoColetados") renderizarNaoColetados();
-            if (id === "principal") renderizar();
-            closeNav(); // Fechar o menu ao selecionar uma página
+        // Garante que o datalist exista no HTML. Se não existir, crie-o.
+        if (!document.getElementById('nomesContatos')) {
+            const datalist = document.createElement('datalist');
+            datalist.id = 'nomesContatos';
+            document.body.appendChild(datalist); // Adiciona ao body ou em um local apropriado
         }
 
-        function openNav() {
-            document.getElementById("mainNav").classList.add("open");
-            document.getElementById("overlay").classList.add("open");
-            document.getElementById("hamburgerBtn").classList.add("open");
+        // Chame as funções de renderização e atualização ao carregar a página
+        renderizarContatos();
+        atualizarDatalistNomes();
+    });
+
+    // Adapte a função showPage para incluir a renderização dos contatos
+    function showPage(pageId) {
+        // ... seu código showPage existente ...
+
+        // NOVO: Atualiza a renderização da tabela de contatos quando a aba é acessada
+        if (pageId === 'contatos') {
+            renderizarContatos();
+            atualizarDatalistNomes(); // Garante que o datalist esteja atualizado
         }
+    }
+function showPage(id) { // O parâmetro é 'id'
+    // 1. Oculta todas as páginas (abas)
+    document.querySelectorAll('[role="tabpanel"]').forEach(aba => aba.classList.add('hidden'));
 
-        function closeNav() {
-            document.getElementById("mainNav").classList.remove("open");
-            document.getElementById("overlay").classList.remove("open");
-            document.getElementById("hamburgerBtn").classList.remove("open");
+    // 2. Remove a classe 'active' de todos os botões de navegação
+    document.querySelectorAll('.nav-button').forEach(button => {
+        button.classList.remove('active');
+    });
+
+    // 3. Mostra a página desejada
+    const targetPage = document.getElementById(id); // CORRIGIDO: usa 'id'
+    if (targetPage) {
+        targetPage.classList.remove('hidden');
+    }
+    
+    closeNav(); // Fecha o menu se estiver no mobile (assumindo que closeNav está definida)
+
+    // 4. Adiciona a classe 'active' ao botão de navegação correspondente
+    // Isso assume que seus botões de navegação têm onclick="showPage('ID_DA_PAGINA')"
+    const clickedButton = document.querySelector(`.nav-button[onclick="showPage('${id}')"]`); // CORRIGIDO: usa 'id'
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+
+    // 5. Chama a função de renderização específica para cada aba
+    if (id === "planilha" || id === "principal") {
+        renderizar(); // Assumindo que renderizar() está definida
+    }
+    if (id === "caixa") {
+        calcularCaixa(); // Assumindo que calcularCaixa() está definida
+        atualizarCaixaGasolina(); // Assumindo que atualizarCaixaGasolina() está definida
+    } else {
+        // Garante que os detalhes de caixa/gasolina estejam escondidos se não estiver na aba "Caixa"
+        const detalhesCaixa = document.getElementById('detalhesCaixa');
+        const detalhesGasolina = document.getElementById('detalhesGasolina');
+        if (detalhesCaixa && !detalhesCaixa.classList.contains('hidden')) {
+            detalhesCaixa.classList.add('hidden');
         }
-        
-        function adicionarEntrega() {
-            const nome = document.getElementById("nome").value.trim();
-            const telefone = document.getElementById("telefone").value.trim();
-            const descricao = document.getElementById("descricao").value.trim();
-            const valor = parseFloat(document.getElementById("valor").value);
-            const pagamento = document.getElementById("pagamento").value;
-            const pago = document.getElementById("pago").checked;
-            const formaPagamento = pago ? pagamento : "";
-            const dataAtual = new Date();
-            
-            const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }).replace(',', '');
+        if (detalhesGasolina && !detalhesGasolina.classList.contains('hidden')) {
+            detalhesGasolina.classList.add('hidden');
+        }
+    }
+    if (id === "registros") {
+        // Limpa os filtros de data ao entrar na página de registros
+        document.getElementById("filtroDataInicio").value = "";
+        document.getElementById("filtroDataFim").value = "";
+        aplicarFiltroHistorico(); // Assumindo que aplicarFiltroHistorico() está definida
+        // Não chame renderizar() aqui novamente se aplicarFiltroHistorico() já renderizar
+        // ou se renderizar() for apenas para a tabela principal da aba inicial.
+    }
+    if (id === "pagos" || id === "naoPagos") {
+        renderizarPagos(); // Assumindo que renderizarPagos() está definida
+    }
+    if (id === "naoColetados") {
+        renderizarNaoColetados(); // Assumindo que renderizarNaoColetados() está definida
+    }
+    
+    // NOVO: Atualiza a renderização da tabela de contatos quando a aba é acessada
+    if (id === 'contatos') { // CORRIGIDO: usa 'id'
+        renderizarContatos(); // Assumindo que renderizarContatos() está definida
+        atualizarDatalistNomes(); // Assumindo que atualizarDatalistNomes() está definida
+    }
+}
 
-            if (!nome || isNaN(valor) || (pago && !pagamento)) {
-                return alert("Preencha todos os campos corretamente. Se marcou pago, escolha forma de pagamento.");
-            }
 
-            entregas.push({
-                nome,
-                telefone,
-                descricao,
-                valor,
-                pagamento: formaPagamento,
-                pago,
-                data: dataFormatada,
-                emergencial: false,
-                coletado: false
-            });
+function openNav() {
+    document.getElementById("mainNav").classList.add("open");
+    document.getElementById("overlay").classList.add("open");
+    document.getElementById("hamburgerBtn").classList.add("open");
+}
 
+function closeNav() {
+    document.getElementById("mainNav").classList.remove("open");
+    document.getElementById("overlay").classList.remove("open");
+    document.getElementById("hamburgerBtn").classList.remove("open");
+}
+
+function adicionarEntrega() {
+    const nome = document.getElementById("nome").value.trim();
+    const telefone = document.getElementById("telefone").value.trim();
+    const descricao = document.getElementById("descricao").value.trim();
+    const valor = parseFloat(document.getElementById("valor").value);
+    const pagamento = document.getElementById("pagamento").value;
+    const pago = document.getElementById("pago").checked;
+    const formaPagamento = pago ? pagamento : "";
+    const dataAtual = new Date();
+
+    const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).replace(',', '');
+
+    const dataParaOrdenacao = dataAtual.toISOString().split('T')[0]; // Data no formato YYYY-MM-DD para filtragem/ordenação
+
+    if (!nome || isNaN(valor) || (pago && !pagamento)) {
+        return alert("Preencha todos os campos corretamente. Se marcou pago, escolha forma de pagamento.");
+    }
+
+    entregas.push({
+        id: generateUniqueId(), // Novo: Adiciona um ID único
+        nome,
+        telefone,
+        descricao,
+        valor,
+        pagamento: formaPagamento,
+        pago,
+        data: dataFormatada,
+        dataOrdenacao: dataParaOrdenacao, // Novo: Data para filtro e ordenação
+        emergencial: false,
+        coletado: false
+    });
+
+    salvar();
+
+    document.getElementById("nome").value = "";
+    document.getElementById("telefone").value = "";
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+    document.getElementById("pagamento").value = "";
+    document.getElementById("pago").checked = false;
+}
+
+function salvar() {
+    localStorage.setItem("entregas", JSON.stringify(entregas));
+    renderizar(); // Renderiza a tabela principal (Planilha e Coletas Atuais)
+    renderizarPagos(); // Renderiza a tabela de pagos e não pagos
+    renderizarNaoColetados(); // Renderiza a tabela de não coletados
+    // Se a página de registros estiver ativa, atualize-a também
+    if (document.getElementById('registros') && !document.getElementById('registros').classList.contains('hidden')) {
+        aplicarFiltroHistorico();
+    }
+}
+
+function marcarEmergencial(i) {
+    entregas[i].emergencial = !entregas[i].emergencial;
+    salvar();
+}
+
+// Adaptei a função excluir para usar 'id' ao invés de 'i' para lidar com arrays que podem mudar de índice
+function excluir(id) {
+    if (confirm("Excluir coleta?")) {
+        const index = entregas.findIndex(e => e.id === id);
+        if (index > -1) {
+            entregas.splice(index, 1);
             salvar();
+        } else {
+            alert("Registro não encontrado.");
+        }
+    }
+}
 
-            document.getElementById("nome").value = "";
-            document.getElementById("telefone").value = "";
-            document.getElementById("descricao").value = "";
-            document.getElementById("valor").value = "";
-            document.getElementById("pagamento").value = "";
-            document.getElementById("pago").checked = false;
-        }
-        
-        function salvar() {
-            localStorage.setItem("entregas", JSON.stringify(entregas));
-            renderizar();
-            renderizarPagos();
-            renderizarNaoColetados();
-        }
-        
-        function marcarEmergencial(i) {
-            entregas[i].emergencial = !entregas[i].emergencial;
-            salvar();
-        }
-        
-        function excluir(i) {
-            if (confirm("Excluir coleta?")) {
-                entregas.splice(i, 1);
-                salvar();
-            }
-        }
-        
-        function fecharSemana() {
-            if (!confirm("Fechar a semana? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
-            
-            historico.push({ 
-                semana: new Date().toISOString(), 
-                dados: JSON.parse(JSON.stringify(entregas)), 
-                caixaLancamentos: JSON.parse(JSON.stringify(caixaTroco)),
-                gasolinaLancamentos: JSON.parse(JSON.stringify(gasolinaValor))
-            });
-            
-            entregas = [];
-            
-            caixaTroco = [];
-            gasolinaValor = [];
-            
-            localStorage.setItem("entregas", "[]");
-            localStorage.setItem("historico", JSON.stringify(historico));
-            localStorage.setItem("caixaTroco", JSON.stringify(caixaTroco));
-            localStorage.setItem("gasolinaValor", JSON.stringify(gasolinaValor));
-            
-            renderizar();
-            atualizarCaixaGasolina();
-            renderizarNaoColetados();
-            alert("Semana fechada. Dados salvos em registros e caixa/gasolina zerados.");
-        }
-        
-        function atualizarCampo(i, campo, valor) {
-            if (campo === "valor") {
-                valor = parseFloat(valor);
-                if (isNaN(valor)) return;
-            }
-            entregas[i][campo] = valor;
-            if (campo === "pago" && !valor) {
-                entregas[i].pagamento = "";
-            }
-            salvar();
-        }
-        
-        function togglePago(i) {
-            entregas[i].pago = !entregas[i].pago;
-            if (!entregas[i].pago) entregas[i].pagamento = "";
-            salvar();
-        }
+function fecharSemana() {
+    if (!confirm("Fechar a semana? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
 
-        function toggleColetado(i) {
-            entregas[i].coletado = !entregas[i].coletado;
-            salvar();
-        }
-        
-        function renderizar() {
-            const tabela = document.getElementById("tabela-principal");
-            tabela.innerHTML = "";
-            if (entregas.length === 0) {
-                tabela.innerHTML = `<tr><td colspan='9'>Nenhum registro na semana atual.</td></tr>`;
-                return;
-            }
-            entregas.forEach((e, i) => {
-                tabela.innerHTML += `
-             <tr>
-    <td><input type="text" value="${e.nome}" onchange="atualizarCampo(${i}, 'nome', this.value)" /></td>
-    <td><input type="text" value="${e.telefone || ''}" onchange="atualizarCampo(${i}, 'telefone', this.value)" /></td>
-    <td><input type="text" value="${e.descricao || ''}" onchange="atualizarCampo(${i}, 'descricao', this.value)" /></td>
-    <td><input type="number" value="${e.valor.toFixed(2)}" onchange="atualizarCampo(${i}, 'valor', this.value)" /></td>
-    <td>
-        <select onchange="atualizarCampo(${i}, 'pagamento', this.value)">
-            <option value="">Selecione</option>
-            <option ${e.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
-            <option ${e.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
-            <option ${e.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
-        </select>
-    </td>
-    <td><input type="checkbox" ${e.pago ? 'checked' : ''} onclick="togglePago(${i})" /></td>
-    <td><input type="checkbox" ${e.coletado ? 'checked' : ''} onclick="toggleColetado(${i})" /></td>
-    <td>${e.data}</td>
-    <td>
-        <button class="small" onclick="marcarEmergencial(${i})">
-            <span class="badge ${e.emergencial ? 'emergencial' : 'principal'}">
-                ${e.emergencial ? 'Gilnei' : 'Alfredo'}
-            </span>
-            
-        </button>
-        <button class="small" onclick="excluir(${i})">X</button>
-    </td>
-</tr>
+    // Cria um resumo da semana antes de limpar os dados
+    const resumoSemana = {
+        id: 'resumo-' + Date.now(),
+        tipo: 'resumo',
+        data: new Date().toISOString().split('T')[0],
+        caixaTotal: calcularTotal(caixaTroco),
+        gasolinaTotal: calcularTotal(gasolinaValor),
+        totalBruto: entregas.reduce((acc, e) => acc + e.valor, 0),
+        emergenciais: entregas.filter(e => e.emergencial).length * 10,
+        subtotal: 0, // será atualizado abaixo
+        comissao: 0  // idem
+    };
 
-                    </tr>
-                `;
-            });
-            renderizarPagos();
-            renderizarNaoColetados();
+    // Calcula subtotal e comissão
+    resumoSemana.subtotal = resumoSemana.totalBruto - resumoSemana.emergenciais;
+    resumoSemana.comissao = resumoSemana.subtotal * 0.22;
+
+    // Adiciona entregas e resumo ao histórico
+    historico = historico.concat(entregas);
+    historico.push(resumoSemana);
+
+    // Limpa os dados da semana atual
+    entregas = [];
+    caixaTroco = [];
+    gasolinaValor = [];
+
+    localStorage.setItem("entregas", "[]");
+    localStorage.setItem("historico", JSON.stringify(historico));
+    localStorage.setItem("caixaTroco", JSON.stringify(caixaTroco));
+    localStorage.setItem("gasolinaValor", JSON.stringify(gasolinaValor));
+
+    renderizar(); // Atualiza planilha principal
+    atualizarCaixaGasolina(); // Atualiza caixa/gasolina zerados
+    renderizarNaoColetados(); // Atualiza lista de não coletados
+    aplicarFiltroHistorico(); // Atualiza aba "Registros"
+    
+    alert("Semana fechada. Resumo e entregas salvos no histórico, e dados da semana atual foram zerados.");
+}
+
+// Cria um resumo da semana antes de limpar os dados
+const resumoSemana = {
+    id: 'resumo-' + Date.now(),
+    tipo: 'resumo',
+    data: new Date().toISOString().split('T')[0],
+    caixaTotal: calcularTotal(caixaTroco),
+    gasolinaTotal: calcularTotal(gasolinaValor),
+    caixaDetalhado: caixaTroco.map(e => ({
+        valor: e.valor,
+        data: e.data
+    })),
+    gasolinaDetalhado: gasolinaValor.map(e => ({
+        valor: e.valor,
+        data: e.data
+    })),
+    totalBruto: entregas.reduce((acc, e) => acc + e.valor, 0),
+    emergenciais: entregas.filter(e => e.emergencial).length * 10,
+    subtotal: 0, // será atualizado abaixo
+    comissao: 0  // idem
+};
+
+// Calcula subtotal e comissão
+resumoSemana.subtotal = resumoSemana.totalBruto - resumoSemana.emergenciais;
+resumoSemana.comissao = resumoSemana.subtotal * 0.22;
+
+// Salva esse resumo no histórico
+historico.push(resumoSemana);
+
+
+
+// Adaptei atualizarCampo para usar 'id' ao invés de 'i'
+function atualizarCampo(id, campo, valor) {
+    const index = entregas.findIndex(e => e.id === id);
+    if (index === -1) return;
+
+    if (campo === "valor") {
+        valor = parseFloat(valor);
+        if (isNaN(valor)) return;
+    }
+    entregas[index][campo] = valor;
+    if (campo === "pago" && !valor) { // Se desmarcou "Pago", limpa a forma de pagamento
+        entregas[index].pagamento = "";
+    }
+    salvar();
+}
+
+// Adaptei togglePago para usar 'id' ao invés de 'i'
+function togglePago(id) {
+    const index = entregas.findIndex(e => e.id === id);
+    if (index === -1) return;
+
+    entregas[index].pago = !entregas[index].pago;
+    if (!entregas[index].pago) entregas[index].pagamento = "";
+    salvar();
+}
+
+// Adaptei toggleColetado para usar 'id' ao invés de 'i'
+function toggleColetado(id) {
+    const index = entregas.findIndex(e => e.id === id);
+    if (index === -1) return;
+
+    entregas[index].coletado = !entregas[index].coletado;
+    salvar();
+}
+
+
+function renderizar() {
+    const tabelaPrincipal = document.querySelector("#planilha #tabela-principal");
+    const tabelaColetasAtuais = document.querySelector("#registros #tabela-principal"); // A tabela "Coletas Atuais" dentro de "registros"
+
+    // Funções auxiliares para evitar repetição
+    function renderizarTabela(element, dataArray) {
+        if (!element) return; // Garante que o elemento existe
+        element.innerHTML = "";
+        if (dataArray.length === 0) {
+            element.innerHTML = `<tr><td colspan='9'>Nenhum registro na semana atual.</td></tr>`;
+            return;
         }
-        
-       function renderizarPagos() {
+        dataArray.forEach((e) => {
+            element.innerHTML += `
+                <tr>
+                    <td><input type="text" value="${e.nome || ''}" onchange="atualizarCampo('${e.id}', 'nome', this.value)" /></td>
+                    <td><input type="text" value="${e.telefone || ''}" onchange="atualizarCampo('${e.id}', 'telefone', this.value)" /></td>
+                    <td><input type="text" value="${e.descricao || ''}" onchange="atualizarCampo('${e.id}', 'descricao', this.value)" /></td>
+                    <td><input type="number" value="${e.valor.toFixed(2)}" onchange="atualizarCampo('${e.id}', 'valor', this.value)" /></td>
+                    <td>
+                        <select onchange="atualizarCampo('${e.id}', 'pagamento', this.value)">
+                            <option value="">Selecione</option>
+                            <option ${e.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
+                            <option ${e.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
+                            <option ${e.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
+                        </select>
+                    </td>
+                    <td><input type="checkbox" ${e.pago ? 'checked' : ''} onclick="togglePago('${e.id}')" /></td>
+                    <td><input type="checkbox" ${e.coletado ? 'checked' : ''} onclick="toggleColetado('${e.id}')" /></td>
+                    <td>${e.data}</td>
+                    <td>
+                        <button class="small" onclick="marcarEmergencialPlanilha('${e.id}')">
+                            <span class="badge ${e.emergencial ? 'emergencial' : 'principal'}">
+                                ${e.emergencial ? 'Gilnei' : 'Alfredo'}
+                            </span>
+                        </button>
+                        <button class="small" onclick="excluir('${e.id}')">X</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Renderiza a Planilha principal
+    renderizarTabela(tabelaPrincipal, entregas);
+    // Renderiza a seção "Coletas Atuais" dentro de "Registros" (se existir)
+    renderizarTabela(tabelaColetasAtuais, entregas);
+}
+
+// Nova função para marcar emergencial na Planilha, usando ID
+function marcarEmergencialPlanilha(id) {
+    const index = entregas.findIndex(e => e.id === id);
+    if (index > -1) {
+        entregas[index].emergencial = !entregas[index].emergencial;
+        salvar();
+    }
+}
+
+
+function renderizarPagos() {
     const tabelaPagos = document.getElementById("tabela-pagos");
     const tabelaNaoPagos = document.getElementById("tabela-naoPagos");
-    const listaTelefonesNaoPagosSpan = document.getElementById("listaTelefones"); // Renomeado para clareza
+    const listaTelefonesNaoPagosSpan = document.getElementById("listaTelefones");
 
-    // Limpa ambas as tabelas antes de renderizar
     tabelaPagos.innerHTML = "";
     tabelaNaoPagos.innerHTML = "";
-    listaTelefonesNaoPagosSpan.textContent = ""; // Limpa a lista de telefones também
+    listaTelefonesNaoPagosSpan.textContent = "";
 
     const pagos = entregas.filter(e => e.pago);
-    const naoPagos = entregas.filter(e => !e.pago);
+    // Combina entregas atuais e histórico, filtrando apenas as entregas (não resumos)
+    const allDeliveries = entregas.concat(historico.filter(item => item.tipo !== 'resumo'));
+    const naoPagos = allDeliveries.filter(e => !e.pago);
 
     // --- Renderização da Tabela de Pagos ---
     if (pagos.length === 0) {
@@ -360,27 +675,24 @@
     if (naoPagos.length === 0) {
         tabelaNaoPagos.innerHTML = `<tr><td colspan='7' style="text-align:center;">Nenhum cliente não pago no momento.</td></tr>`;
     } else {
-        naoPagos.forEach((e, i) => {
-            // Apenas coleta telefones se existirem para a lista geral
+        naoPagos.forEach((e) => {
             if (e.telefone) {
                 telefonesParaMensagemGeral.push(e.telefone.replace(/\D/g, ''));
             }
 
-            // Mensagem personalizada para o WhatsApp individual
             const mensagemWhatsApp = `Olá ${e.nome || 'cliente'}! Gostaríamos de lembrar que sua pendência conosco no valor de R$ ${e.valor ? e.valor.toFixed(2) : '0.00'} referente a "${e.descricao || 'uma entrega'}" ainda não foi paga. Por favor, entre em contato para regularizar. Obrigado!`;
 
-            // HTML para o botão do WhatsApp (renderiza apenas se tiver telefone)
             const whatsappButtonHtml = e.telefone ? `
                 <a href="https://wa.me/55${e.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(mensagemWhatsApp)}"
-                   target="_blank"
-                   class="whatsapp-btn small"
-                   title="Enviar WhatsApp para ${e.nome || 'este cliente'}">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                    target="_blank"
+                    class="whatsapp-btn small"
+                    title="Enviar WhatsApp para ${e.nome || 'este cliente'}">
+                   <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
                         <path d="M12.04 2C7.38 2 3.63 5.75 3.63 10.42C3.63 12.09 4.09 13.6 4.88 14.93L3.5 19.5L8.23 18.2C9.44 18.88 10.79 19.24 12.04 19.24C16.7 19.24 20.46 15.48 20.46 10.82C20.46 6.16 16.7 2 12.04 2ZM15.99 14.73C15.76 15.09 15.11 15.16 14.7 15.04C14.28 14.93 12.63 14.13 12.33 14.03C12.02 13.93 11.72 13.96 11.49 14.21C11.26 14.47 10.59 15.17 10.35 15.42C10.11 15.68 9.87 15.71 9.45 15.48C9.03 15.25 7.64 14.06 6.55 12.18C5.69 10.74 5.43 9.94 5.66 9.58C5.89 9.23 6.18 9.13 6.42 9.07C6.61 9.01 6.81 9 7 9C7.19 9 7.42 9.08 7.6 9.27C7.81 9.49 8.08 9.77 8.32 10.03C8.56 10.28 8.77 10.32 8.97 10.22C9.17 10.12 9.78 9.85 10.49 9.17C11.31 8.36 11.95 7.45 12.18 7.07C12.4 6.7 12.64 6.8 12.87 6.9C13.06 6.99 14.06 7.49 14.26 7.67C14.46 7.84 14.59 7.95 14.83 8.1C15.06 8.24 15.29 8.3 15.49 8.2C15.68 8.1 16.14 7.66 16.35 7.4C16.57 7.15 16.79 7.19 17.02 7.28C17.26 7.37 18.06 7.74 18.21 7.82C18.36 7.9 18.49 7.98 18.52 8.06C18.55 8.14 18.55 8.29 18.48 8.44C18.41 8.59 17.9 9.09 17.15 9.82C16.4 10.55 15.76 11.19 15.65 11.45C15.54 11.71 15.54 11.83 15.74 12.2C15.94 12.57 16.2 12.78 16.4 12.98C16.61 13.18 16.73 13.4 16.66 13.62C16.59 13.85 16.22 14.39 15.99 14.73Z"/>
-                    </svg>
+                   </svg>
                 </a>
-            ` : `<span style="color: #6c757d;">Sem contato</span>`; // Se não tiver telefone
-            
+            ` : `<span style="color: #6c757d;">Sem contato</span>`;
+
             tabelaNaoPagos.innerHTML += `
                 <tr>
                     <td>${e.nome || '-'}</td>
@@ -389,257 +701,285 @@
                     <td>R$ ${e.valor ? e.valor.toFixed(2) : '0.00'}</td>
                     <td>${e.pago ? 'Sim' : 'Não'}</td>
                     <td>${e.data || '-'}</td>
-                    <td>${whatsappButtonHtml}</td> </tr>
+                    <td>
+                ${whatsappButtonHtml}
+                <button class="small btn-marcar-pago" onclick="marcarComoPago('${e.id}')">Pago</button>
+            </td>
+                </tr>
             `;
         });
     }
 
-    // Atualiza a lista de telefones para envio em massa
     listaTelefonesNaoPagosSpan.textContent = telefonesParaMensagemGeral.join(', ') || 'Nenhum telefone disponível.';
 }
-        
-        function renderizarNaoColetados() {
-            const tabelaNaoColetados = document.getElementById("tabela-naoColetados");
-            tabelaNaoColetados.innerHTML = "";
-            const naoColetados = entregas.filter(e => !e.coletado);
 
-            const listaTelefonesNaoColetados = document.getElementById("listaTelefonesNaoColetados");
-            listaTelefonesNaoColetados.innerHTML = "";
+function renderizarNaoColetados() {
+    const tabelaNaoColetados = document.getElementById("tabela-naoColetados");
+    tabelaNaoColetados.innerHTML = "";
+    const naoColetados = entregas.filter(e => !e.coletado);
 
-            if (naoColetados.length === 0) {
-                tabelaNaoColetados.innerHTML = `<tr><td colspan='6'>Nenhuma mercadoria não coletada no momento.</td></tr>`;
-                return;
-            }
+    const listaTelefonesNaoColetados = document.getElementById("listaTelefonesNaoColetados");
+    listaTelefonesNaoColetados.innerHTML = "";
 
-            let telefones = [];
-            naoColetados.forEach((e) => {
-                const originalIndex = entregas.findIndex(item => item === e);
-                
-                tabelaNaoColetados.innerHTML += `
-                    <tr>
-                        <td>${e.nome}</td>
-                        <td>${e.telefone || '-'}</td>
-                        <td>${e.descricao || '-'}</td>
-                        <td>R$ ${e.valor.toFixed(2)}</td>
-                        <td>${e.data}</td>
-                        <td>
-                            <button class="small" onclick="toggleColetado(${originalIndex})">Marcar Coletado</button>
-                            <button class="small" onclick="excluir(${originalIndex})">X</button>
-                        </td>
-                    </tr>
-                `;
-                if (e.telefone) {
-                    telefones.push(e.telefone);
-                }
-            });
+    if (naoColetados.length === 0) {
+        tabelaNaoColetados.innerHTML = `<tr><td colspan='6'>Nenhuma mercadoria não coletada no momento.</td></tr>`;
+        return;
+    }
 
-            listaTelefonesNaoColetados.textContent = telefones.join(', ');
+    let telefones = [];
+    naoColetados.forEach((e) => {
+        // Usa o ID para as ações de toggle e excluir
+        tabelaNaoColetados.innerHTML += `
+                <tr>
+                    <td>${e.nome}</td>
+                    <td>${e.telefone || '-'}</td>
+                    <td>${e.descricao || '-'}</td>
+                    <td>R$ ${e.valor.toFixed(2)}</td>
+                    <td>${e.data}</td>
+                    <td>
+                        <button class="small" onclick="toggleColetado('${e.id}')">Marcar Coletado</button>
+                        <button class="small" onclick="excluir('${e.id}')">X</button>
+                    </td>
+                </tr>
+            `;
+        if (e.telefone) {
+            telefones.push(e.telefone);
         }
-        
-        function calcularCaixa() {
-            const totalBruto = entregas.reduce((acc, e) => acc + e.valor, 0);
-            const emergencialTotal = entregas.filter(e => e.emergencial).length * 10;
-            const subtotal = totalBruto - emergencialTotal;
-            const comissao = subtotal * 0.22;
+    });
 
-            document.getElementById("totalBruto").textContent = totalBruto.toFixed(2);
-            document.getElementById("emergencialTotal").textContent = emergencialTotal.toFixed(2);
-            document.getElementById("subtotal").textContent = subtotal.toFixed(2);
-            document.getElementById("comissao").textContent = comissao.toFixed(2);
+    listaTelefonesNaoColetados.textContent = telefones.join(', ');
+}
+
+function calcularCaixa() {
+    const totalBruto = entregas.reduce((acc, e) => acc + e.valor, 0);
+    const emergencialTotal = entregas.filter(e => e.emergencial).length * 10;
+    const subtotal = totalBruto - emergencialTotal; // Subtotal parece estar subtraindo o emergencial, conforme a imagem 1
+    const comissao = subtotal * 0.22;
+
+    document.getElementById("totalBruto").textContent = totalBruto.toFixed(2);
+    document.getElementById("emergencialTotal").textContent = emergencialTotal.toFixed(2);
+    document.getElementById("subtotal").textContent = subtotal.toFixed(2);
+    document.getElementById("comissao").textContent = comissao.toFixed(2);
+}
+
+// ============== NOVAS FUNÇÕES PARA O HISTÓRICO EDITÁVEL ==============
+
+function aplicarFiltroHistorico() {
+    
+    const inicio = document.getElementById("filtroDataInicio").value;
+    const fim = document.getElementById("filtroDataFim").value;
+    const tabelaHistoricoBody = document.getElementById("tabela-historico"); // O tbody que adicionamos no HTML
+    tabelaHistoricoBody.innerHTML = "";
+
+    // Certifica-se que 'historico' está carregado corretamente
+    historico = JSON.parse(localStorage.getItem("historico") || "[]");
+
+    // Filtrar os registros
+    let resultadosFiltrados = historico.filter(registro => {
+        const dataRegistroStr = registro.dataOrdenacao || (registro.data ? registro.data.split(' ')[0].split('/').reverse().join('-') : ''); // Tenta pegar dataOrdenacao ou formatar de 'data'
+        if (!dataRegistroStr) return false;
+
+        const dataRegistro = new Date(dataRegistroStr + 'T00:00:00'); // Garante que a comparação é de dia completo
+        const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
+        const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
+
+        let inclui = true;
+        if (dataInicio && dataRegistro < dataInicio) {
+            inclui = false;
         }
-        
-        function aplicarFiltroHistorico() {
-            const inicio = document.getElementById("filtroDataInicio").value;
-            const fim = document.getElementById("filtroDataFim").value;
-            const historicoDiv = document.getElementById("historico");
-            historicoDiv.innerHTML = "";
-
-            if (historico.length === 0) {
-                historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum histórico registrado.</p>`;
-                return;
-            }
-
-            let resultadosFiltrados = [];
-
-            historico.forEach((semanaRecord, semanaIndex) => {
-                const dataSemana = new Date(semanaRecord.semana);
-                const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
-                const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
-
-                let incluirSemana = true;
-                if (dataInicio && dataSemana < dataInicio) {
-                    incluirSemana = false;
-                }
-                if (dataFim && dataSemana > dataFim) {
-                    incluirSemana = false;
-                }
-
-                if (incluirSemana) {
-                    resultadosFiltrados.push({ ...semanaRecord, originalIndex: semanaIndex });
-                }
-            });
-
-            historicoFiltradoAtual = resultadosFiltrados;
-
-            if (resultadosFiltrados.length === 0) {
-                historicoDiv.innerHTML = `<p style="text-align: center; font-style: italic; color: #999;">Nenhum registro encontrado para o período selecionado.</p>`;
-                return;
-            }
-
-            resultadosFiltrados.forEach((semanaRecord, idx) => {
-                const semanaTitulo = `Semana de ${new Date(semanaRecord.semana).toLocaleDateString('pt-BR')}`;
-                let semanaContent = `<h3>${semanaTitulo}</h3>`;
-
-                const totalBrutoSemana = semanaRecord.dados.reduce((acc, e) => acc + e.valor, 0);
-                const emergencialSemana = semanaRecord.dados.filter(e => e.emergencial).length * 10;
-                const subtotalSemana = totalBrutoSemana + emergencialSemana;
-                const comissaoSemana = subtotalSemana * 0.22;
-
-                semanaContent += `
-                    <div class="resumo-extra" style="border-top: none; padding-top: 0;">
-                        <p>Total Bruto: <strong>R$ ${totalBrutoSemana.toFixed(2)}</strong></p>
-                        <p>Emergenciais: <strong>R$ ${emergencialSemana.toFixed(2)}</strong></p>
-                        <p>Subtotal: <strong>R$ ${subtotalSemana.toFixed(2)}</strong></p>
-                        <p>Comissão: <strong>R$ ${comissaoSemana.toFixed(2)}</strong></p>
-                    </div>
-                `;
-
-                semanaContent += `
-                    <table style="width: 100%; margin-top: 10px;">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" onchange="toggleSelectAllHistorico(this, ${idx})" aria-label="Selecionar todos da semana" /></th>
-                                <th>Nome</th>
-                                <th>Valor (R$)</th>
-                                <th>Pago</th>
-                                <th>Coletado</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-                if (semanaRecord.dados.length === 0) {
-                    semanaContent += `<tr><td colspan="6">Nenhum registro de entrega para esta semana.</td></tr>`;
-                } else {
-                    semanaRecord.dados.forEach((entrega, entregaIdx) => {
-                        semanaContent += `
-                            <tr>
-                                <td><input type="checkbox" class="historico-checkbox" data-semana-idx="${idx}" data-entrega-idx="${entregaIdx}" aria-label="Selecionar registro" /></td>
-                                <td>${entrega.nome}</td>
-                                <td>R$ ${entrega.valor.toFixed(2)}</td>
-                                <td>${entrega.pago ? 'Sim' : 'Não'}</td>
-                                <td>${entrega.coletado ? 'Sim' : 'Não'}</td>
-                                <td>${entrega.data}</td>
-                            </tr>
-                        `;
-                    });
-                }
-                semanaContent += `</tbody></table>`;
-
-                const totalCaixaSemana = calcularTotal(semanaRecord.caixaLancamentos);
-                const totalGasolinaSemana = calcularTotal(semanaRecord.gasolinaLancamentos);
-
-                semanaContent += `
-                    <div class="resumo-extra">
-                        <p>Total Caixa (troco): <strong id="caixaResumoTotalSemana_${idx}">R$ ${totalCaixaSemana.toFixed(2)}</strong></p>
-                        <div class="detalhes-container">
-                            <h4>Detalhes do Caixa (troco) da Semana</h4>
-                            <ul>
-                `;
-                if (semanaRecord.caixaLancamentos && semanaRecord.caixaLancamentos.length > 0) {
-                    semanaRecord.caixaLancamentos.forEach(item => {
-                        semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
-                    });
-                } else {
-                    semanaContent += `<li>Nenhum lançamento de caixa para esta semana.</li>`;
-                }
-                semanaContent += `
-                            </ul>
-                        </div>
-                        <p style="margin-top:10px;">Total Gasolina: <strong id="gasolinaResumoTotalSemana_${idx}">R$ ${totalGasolinaSemana.toFixed(2)}</strong></p>
-                        <div class="detalhes-container">
-                            <h4>Detalhes da Gasolina da Semana</h4>
-                            <ul>
-                `;
-                if (semanaRecord.gasolinaLancamentos && semanaRecord.gasolinaLancamentos.length > 0) {
-                    semanaRecord.gasolinaLancamentos.forEach(item => {
-                        semanaContent += `<li><span>${formatarDataParaExibicao(item.data)}</span> <span class="valor">R$ ${item.valor.toFixed(2)}</span></li>`;
-                    });
-                } else {
-                    semanaContent += `<li>Nenhum lançamento de gasolina para esta semana.</li>`;
-                }
-                semanaContent += `
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                historicoDiv.innerHTML += `<div class="historico-semana">${semanaContent}</div>`;
-            });
+        if (dataFim && dataRegistro > dataFim) {
+            inclui = false;
         }
+        return inclui;
+    });
 
-        function toggleSelectAllHistorico(checkbox, semanaIndex) {
-            const checkboxes = document.querySelectorAll(`#historico [data-semana-idx="${semanaIndex}"]`);
-            checkboxes.forEach(cb => cb.checked = checkbox.checked);
-        }
+    // Armazena os registros filtrados para operações em massa (apagar filtrados)
+    historicoFiltradoAtual = resultadosFiltrados;
 
-        function apagarSelecionados() {
-            if (!confirm("Tem certeza que deseja apagar os registros selecionados?")) return;
+    if (resultadosFiltrados.length === 0) {
+        tabelaHistoricoBody.innerHTML = `<tr><td colspan="10" style="text-align: center;">Nenhum registro encontrado para o período selecionado.</td></tr>`;
+        return;
+    }
 
-            const checkboxes = document.querySelectorAll('.historico-checkbox:checked');
-            const paraRemover = [];
+resultadosFiltrados.sort((a, b) => new Date(b.dataOrdenacao || b.data) - new Date(a.dataOrdenacao || a.data)); // Ordena por data mais recente
 
-            checkboxes.forEach(cb => {
-                const semanaIdx = parseInt(cb.dataset.semanaIdx);
-                const entregaIdx = parseInt(cb.dataset.entregaIdx);
-                paraRemover.push({ semanaIdx, entregaIdx });
-            });
+    // Exibe os dados na tabela
+resultadosFiltrados.forEach((entrega) => {
+    if (entrega.tipo === 'resumo') {
+    const dataResumo = formatarDataParaExibicao(entrega.data || '');
 
-            const agrupadoPorSemana = paraRemover.reduce((acc, item) => {
-                acc[item.semanaIdx] = acc[item.semanaIdx] || [];
-                acc[item.semanaIdx].push(item.entregaIdx);
-                return acc;
-            }, {});
+    const datasCaixa = [...new Set(entrega.caixaDetalhado?.map(c => formatarDataParaExibicao(c.data)) || [])];
+    const datasGasolina = [...new Set(entrega.gasolinaDetalhado?.map(g => formatarDataParaExibicao(g.data)) || [])];
 
-            for (const semanaIdxStr in agrupadoPorSemana) {
-                const semanaIdx = parseInt(semanaIdxStr);
-                const indicesEntregas = agrupadoPorSemana[semanaIdx].sort((a, b) => b - a);
+    tabelaHistoricoBody.innerHTML += `
+        <tr style="background-color: #f8f8f8;">
+            <td colspan="10" style="text-align:left; font-size: 14px;">
+                <strong>Resumo do Dia ${dataResumo}:</strong><br><br>
 
-                indicesEntregas.forEach(entregaIdx => {
-                    if (historico[semanaIdx] && historico[semanaIdx].dados) {
-                        historico[semanaIdx].dados.splice(entregaIdx, 1);
-                    }
-                });
-            }
+                <strong>Caixa:</strong> R$ ${entrega.caixaTotal?.toFixed(2) || '0.00'}
+                <span style="color: #555;">(Datas: ${datasCaixa.join(', ') || '---'})</span><br>
 
-            localStorage.setItem("historico", JSON.stringify(historico));
-            aplicarFiltroHistorico();
-            alert("Registros selecionados apagados!");
+                <strong>Gasolina:</strong> R$ ${entrega.gasolinaTotal?.toFixed(2) || '0.00'}
+                <span style="color: #555;">(Datas: ${datasGasolina.join(', ') || '---'})</span><br><br>
+
+                <strong>Resumo Financeiro:</strong><br>
+                Total Bruto: R$ ${entrega.totalBruto?.toFixed(2) || '0.00'} |
+                Emergenciais: R$ ${entrega.emergenciais?.toFixed(2) || '0.00'} |
+                Subtotal: R$ ${entrega.subtotal?.toFixed(2) || '0.00'} |
+                Comissão: R$ ${entrega.comissao?.toFixed(2) || '0.00'}
+            </td>
+        </tr>
+    `;
+    return;
+}
+
+    // Registro normal (entrega)
+    tabelaHistoricoBody.innerHTML += `
+        <tr data-id="${entrega.id}">
+            <td><input type="checkbox" class="historico-checkbox-individual" data-id="${entrega.id}" aria-label="Selecionar registro"></td>
+            <td><input type="text" class="historico-input historico-nome" value="${entrega.nome || ''}" disabled></td>
+            <td><input type="text" class="historico-input historico-telefone" value="${entrega.telefone || ''}" disabled></td>
+            <td><input type="text" class="historico-input historico-descricao" value="${entrega.descricao || ''}" disabled></td>
+            <td><input type="number" class="historico-input historico-valor" value="${entrega.valor.toFixed(2)}" step="0.01" disabled></td>
+            <td>
+                <select class="historico-input historico-pagamento" disabled>
+                    <option value="">Selecione</option>
+                    <option value="PGA" ${entrega.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
+                    <option value="PGR" ${entrega.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
+                    <option value="PIX" ${entrega.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
+                </select>
+            </td>
+            <td><input type="checkbox" class="historico-input historico-pago" ${entrega.pago ? 'checked' : ''} disabled></td>
+            <td><input type="checkbox" class="historico-input historico-coletado" ${entrega.coletado ? 'checked' : ''} disabled></td>
+            <td><input type="date" class="historico-input historico-data-edicao" value="${entrega.dataOrdenacao || ''}" disabled></td>
+            <td>
+                <button class="small btn-toggle-historico" onclick="toggleEdicaoHistorico(this, '${entrega.id}')">Editar</button>
+                <button class="small btn-excluir-historico" onclick="excluirRegistroHistorico('${entrega.id}')">X</button>
+            </td>
+        </tr>
+    `;
+});
+
+    
+}
+
+function toggleAllHistorico(checkbox) {
+    const checkboxes = document.querySelectorAll('#tabela-historico .historico-checkbox-individual');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+}
+
+
+function toggleEdicaoHistorico(button, id) {
+    const row = button.closest('tr');
+    const inputs = row.querySelectorAll('.historico-input');
+    const isEditing = button.textContent === 'Salvar';
+
+    inputs.forEach(input => {
+        // Checkboxes e selects são ativados/desativados diretamente
+        // Inputs de texto/número têm o disabled removido
+        input.disabled = !input.disabled;
+    });
+
+    // Se está saindo do modo de edição (clicou em Salvar)
+    if (isEditing) {
+        // Coletar os novos valores
+        const nome = row.querySelector('.historico-nome').value;
+        const telefone = row.querySelector('.historico-telefone').value;
+        const descricao = row.querySelector('.historico-descricao').value;
+        const valor = parseFloat(row.querySelector('.historico-valor').value);
+        const pagamento = row.querySelector('.historico-pagamento').value;
+        const pago = row.querySelector('.historico-pago').checked;
+        const coletado = row.querySelector('.historico-coletado').checked;
+        const dataEdicao = row.querySelector('.historico-data-edicao').value; // Formato YYYY-MM-DD
+
+        // Formatar 'data' para exibição (se necessário), mas usar dataEdicao para ordenação
+        const dataFormatadaExibicao = dataEdicao ? new Date(dataEdicao).toLocaleDateString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }).replace(',', '') : '';
+
+
+        // Encontrar o registro no array 'historico' e atualizá-lo
+        const index = historico.findIndex(item => item.id === id);
+        if (index !== -1) {
+            historico[index] = {
+                id,
+                nome,
+                telefone,
+                descricao,
+                valor,
+                pagamento: pago ? pagamento : "", // Limpa pagamento se não estiver pago
+                pago,
+                coletado,
+                data: dataFormatadaExibicao, // Data para exibição
+                dataOrdenacao: dataEdicao, // Data para ordenação e filtro
+                emergencial: historico[index].emergencial // Mantém o status emergencial
+            };
+            localStorage.setItem('historico', JSON.stringify(historico));
+            alert('Registro atualizado com sucesso!');
+            aplicarFiltroHistorico(); // Recarrega a tabela para exibir os dados atualizados
+        } else {
+            alert('Erro: Registro não encontrado para atualização.');
         }
 
-        function apagarFiltrados() {
-            if (!confirm("Tem certeza que deseja apagar TODOS os registros filtrados?")) return;
+        button.textContent = 'Editar'; // Volta para "Editar"
+    } else {
+        button.textContent = 'Salvar'; // Muda para "Salvar"
+    }
+}
 
-            const semanasParaManter = historico.filter((_, idx) => {
-                return !historicoFiltradoAtual.some(filteredRecord => filteredRecord.originalIndex === idx);
-            });
 
-            historico = semanasParaManter;
+function excluirRegistroHistorico(id) {
+    if (confirm("Tem certeza que deseja apagar este registro do histórico?")) {
+        historico = historico.filter(registro => registro.id !== id);
+        localStorage.setItem("historico", JSON.stringify(historico));
+        aplicarFiltroHistorico(); // Recarrega o histórico
+        alert("Registro excluído do histórico.");
+    }
+}
 
-            localStorage.setItem("historico", JSON.stringify(historico));
-            aplicarFiltroHistorico();
-            alert("Registros filtrados apagados!");
-        }
+function apagarSelecionados() {
+    if (!confirm("Tem certeza que deseja apagar os registros selecionados do histórico?")) return;
 
-        function apagarTodosHistorico() {
-            if (confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) {
-                historico = [];
-                localStorage.setItem("historico", "[]");
-                aplicarFiltroHistorico();
-                alert("Todo o histórico de registros foi apagado.");
-            }
-        }
+    const checkboxes = document.querySelectorAll('#tabela-historico .historico-checkbox-individual:checked');
+    const idsParaRemover = Array.from(checkboxes).map(cb => cb.dataset.id);
 
-        function enviarMensagemGeral() {
+    if (idsParaRemover.length === 0) {
+        alert('Nenhum registro selecionado para apagar.');
+        return;
+    }
+
+    historico = historico.filter(registro => !idsParaRemover.includes(registro.id));
+    localStorage.setItem("historico", JSON.stringify(historico));
+    aplicarFiltroHistorico();
+    alert("Registros selecionados apagados do histórico!");
+}
+
+function apagarFiltrados() {
+    if (!confirm("Tem certeza que deseja apagar TODOS os registros atualmente filtrados do histórico?")) return;
+
+    // Use `historicoFiltradoAtual` que contém os IDs dos registros que estão visíveis
+    const idsParaManter = historico.filter(registro => {
+        return !historicoFiltradoAtual.some(filteredRecord => filteredRecord.id === registro.id);
+    });
+
+    historico = idsParaManter;
+
+    localStorage.setItem("historico", JSON.stringify(historico));
+    aplicarFiltroHistorico();
+    alert("Registros filtrados apagados do histórico!");
+}
+
+function apagarTodosHistorico() {
+    if (confirm("Tem certeza que deseja apagar TODO o histórico de registros? Esta ação é irreversível.")) {
+        historico = [];
+        localStorage.setItem("historico", "[]");
+        aplicarFiltroHistorico();
+        alert("Todo o histórico de registros foi apagado.");
+    }
+}
+
+function enviarMensagemGeral() {
     const naoPagosComTelefone = entregas.filter(e => !e.pago && e.telefone);
     if (naoPagosComTelefone.length === 0) {
         alert("Não há clientes não pagos e com telefone registrado para enviar mensagem.");
@@ -653,8 +993,8 @@
     mensagemDetalhadaParaCopiar += "\nPor favor, entre em contato para regularizar. Obrigado!";
 
     const listaTelefonesFormatada = naoPagosComTelefone
-                                    .map(e => e.telefone.replace(/\D/g, ''))
-                                    .join(', '); // Junta os telefones com vírgula para fácil cópia
+        .map(e => e.telefone.replace(/\D/g, ''))
+        .join(', ');
 
     const confirmSend = confirm(
         "Será gerada uma mensagem geral e a lista de telefones para os clientes não pagos.\n\n" +
@@ -664,12 +1004,9 @@
     );
 
     if (confirmSend) {
-        // Tenta copiar a mensagem detalhada para a área de transferência
         navigator.clipboard.writeText(mensagemDetalhadaParaCopiar)
             .then(() => {
                 alert("Mensagem detalhada copiada para a área de transferência!\n\nAgora, por favor, copie a lista de telefones (" + listaTelefonesFormatada + ") e cole no WhatsApp para enviar.");
-                // Opcional: Você pode tentar abrir o WhatsApp Web aqui, mas sem um destinatário específico.
-                // window.open('https://web.whatsapp.com/', '_blank');
             })
             .catch(err => {
                 console.error('Erro ao copiar a mensagem: ', err);
@@ -692,8 +1029,8 @@ function enviarMensagemNaoColetadosGeral() {
     mensagemDetalhadaParaCopiar += "\nPor favor, entre em contato para agendar a coleta. Obrigado!";
 
     const listaTelefonesFormatada = naoColetados
-                                    .map(e => e.telefone.replace(/\D/g, ''))
-                                    .join(', ');
+        .map(e => e.telefone.replace(/\D/g, ''))
+        .join(', ');
 
     const confirmSend = confirm(
         "Será gerada uma mensagem geral e a lista de telefones para os clientes com mercadorias não coletadas.\n\n" +
@@ -714,6 +1051,42 @@ function enviarMensagemNaoColetadosGeral() {
     }
 }
 
+// Inicialização: Garante que a página "Principal" é exibida e as tabelas são renderizadas ao carregar.
+document.addEventListener('DOMContentLoaded', () => {
+    showPage('principal'); // Garante que a aba "Principal" é a primeira a ser mostrada
+});
+
+function marcarComoPago(id) {
+    if (confirm("Tem certeza que deseja marcar esta entrega como PAGA?")) {
+        // Primeiro, procure na lista de 'entregas' (semana atual)
+        let index = entregas.findIndex(e => e.id === id);
+        if (index > -1) {
+            entregas[index].pago = true;
+            entregas[index].pagamento = "Não Informado"; // Ou outra forma de pagamento padrão se não houver campo para ela na aba Não Pagos
+            salvar(); // Salva as alterações em 'entregas' e renderiza novamente as tabelas
+            return; // Sai da função após encontrar e atualizar
+        }
+
+        // Se não encontrou em 'entregas', procure no 'historico'
+        index = historico.findIndex(e => e.id === id);
+        if (index > -1) {
+            historico[index].pago = true;
+            historico[index].pagamento = "Não Informado"; // Ou outra forma de pagamento padrão
+            localStorage.setItem("historico", JSON.stringify(historico)); // Salva o histórico
+            renderizarPagos(); // Renderiza a aba de pagos para atualizar
+            // Se esta entrega não paga estiver na aba "Registros" e precisar ser atualizada lá,
+            // chame aplicarFiltroHistorico() se a aba registros estiver visível
+            if (document.getElementById('registros') && !document.getElementById('registros').classList.contains('hidden')) {
+                aplicarFiltroHistorico();
+            }
+            return;
+        }
+
+        alert("Erro: Entrega não encontrada para marcar como paga.");
+    }
+}
+
+
     </script>
 </head>
 <body>
@@ -731,22 +1104,24 @@ function enviarMensagemNaoColetadosGeral() {
         </header>
 
         <nav id="mainNav" class="main-nav">
-            <ul class="nav-list">
-                <li><button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button></li>
-                <li><button onclick="showPage('planilha')" aria-controls="planilha" role="tab">Planilha</button></li>
-                <li><button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button></li>
-                <li><button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button></li>
-                <li><button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button></li>
-                <li><button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button></li>
-                <li><button onclick="showPage('registros')" aria-controls="registros" role="tab">Registros</button></li>
-            </ul>
-        </nav>
+    <ul class="nav-list">
+        <li><button onclick="showPage('principal')" aria-controls="principal" role="tab">Principal</button></li>
+        <li><button onclick="showPage('planilha')" aria-controls="planilha" role="tab">Planilha</button></li>
+        <li><button onclick="showPage('pagos')" aria-controls="pagos" role="tab">Pagos</button></li>
+        <li><button onclick="showPage('naoPagos')" aria-controls="naoPagos" role="tab">Não Pagos</button></li>
+        <li><button onclick="showPage('naoColetados')" aria-controls="naoColetados" role="tab">Não Coletados</button></li>
+        <li><button onclick="showPage('caixa')" aria-controls="caixa" role="tab">Caixa</button></li>
+        <li><button onclick="showPage('registros')" aria-controls="registros" role="tab">Registros</button></li>
+        <li><button onclick="showPage('contatos')" aria-controls="contatos" role="tab">Contatos</button></li>
+    </ul>
+</nav>
 
         <div id="overlay" class="overlay" onclick="closeNav()"></div>
 
         <div id="principal" role="tabpanel" tabindex="0">
             <div style="display:flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 10px;">
-                <input type="text" id="nome" placeholder="Nome" aria-label="Nome" />
+                <input type="text" id="nome" placeholder="Nome do Cliente" required aria-label="Nome do Cliente" />
+                <datalist id="nomesContatos"></datalist>
                 <input type="text" id="telefone" placeholder="Telefone" aria-label="Telefone" />
                 <input type="text" id="descricao" placeholder="Descrição" aria-label="Descrição" />
                 <input type="number" id="valor" placeholder="Valor (R$)" min="0" step="0.01" aria-label="Valor" />
@@ -761,167 +1136,212 @@ function enviarMensagemNaoColetadosGeral() {
                 <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Semana</button>
             </div>
         </div>
+
         <div id="planilha" class="hidden" role="tabpanel" tabindex="0">
     <h2>Planilha de Coletas</h2>
-    <table aria-describedby="Tabela de entregas planilha">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Descrição</th>
-                <th>Valor (R$)</th>
-                <th>Pagamento</th>
-                <th>Pago</th>
-                <th>Coletado</th>
-                <th>Data</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-principal"></tbody>
-    </table>
+    <div class="tabela-responsiva-container">
+        <table id="tabela-coletas" aria-describedby="Tabela de entregas planilha"> <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Pagamento</th>
+                    <th>Pago</th>
+                    <th>Coletado</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-principal"></tbody>
+        </table>
+    </div>
 </div>
 
+<div id="pagos" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Clientes Pagos</h2>
+    <div class="tabela-responsiva-container">
+        <table id="tabela-clientes-pagos" aria-describedby="Tabela de clientes pagos"> <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Pagamento</th>
+                    <th>Pago</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-pagos"></tbody>
+        </table>
+    </div>
+</div>
 
-        <div id="pagos" class="hidden" role="tabpanel" tabindex="0">
-            <h2>Clientes Pagos</h2>
-            <table aria-describedby="Tabela de clientes pagos">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Descrição</th>
-                        <th>Valor (R$)</th>
-                        <th>Pagamento</th>
-                        <th>Pago</th>
-                        <th>Data</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-pagos"></tbody>
-            </table>
+<div id="naoPagos" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Clientes Não Pagos</h2>
+    <div class="tabela-responsiva-container">
+        <table id="tabela-clientes-nao-pagos" aria-describedby="Tabela de clientes não pagos"> <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Pago</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-naoPagos"></tbody>
+        </table>
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+        <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
+    </div>
+</div>
+
+<div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Mercadorias Não Coletadas</h2>
+    <div class="tabela-responsiva-container">
+        <table id="tabela-nao-coletados" aria-describedby="Tabela de mercadorias não coletadas"> <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-naoColetados"></tbody>
+        </table>
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="enviarMensagemNaoColetadosGeral()">Enviar Mensagem Geral (WhatsApp)</button>
+        <p>Telefones dos clientes com mercadorias não coletadas (para envio em massa): <span id="listaTelefonesNaoColetados"></span></p>
+    </div>
+</div>
+
+<div id="caixa" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Resumo da Semana</h2>
+    <p>Total Bruto: <strong>R$ <span id="totalBruto"></span></strong></p>
+    <p>Emergenciais (R$10,00 por coleta): <strong>R$ <span id="emergencialTotal"></span></strong></p>
+    <p>Subtotal (com taxa emergencial): <strong>R$ <span id="subtotal"></span></strong></p>
+    <p>Comissão (22%): <strong>R$ <span id="comissao"></span></strong></p>
+
+    <div class="resumo-extra">
+        <p>Total Caixa (troco): <strong id="caixaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('caixa')">+ Detalhes</button></p>
+        <div id="detalhesCaixa" class="detalhes-container hidden">
+            <h4>Detalhes do Caixa (troco)</h4>
+            <ul id="listaDetalhesCaixa"></ul>
         </div>
 
-        <div id="naoPagos" class="hidden" role="tabpanel" tabindex="0">
-            <h2>Clientes Não Pagos</h2>
-            <table aria-describedby="Tabela de clientes não pagos">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Descrição</th>
-                        <th>Valor (R$)</th>
-                        <th>Pago</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-naoPagos"></tbody>
-            </table>
-            <div style="text-align: center; margin-top: 20px;">
-                <button onclick="enviarMensagemGeral()">Enviar Mensagem Geral (WhatsApp)</button>
-                <p>Telefones dos clientes não pagos (para envio em massa): <span id="listaTelefones"></span></p>
-            </div>
-        </div>
-
-        <div id="naoColetados" class="hidden" role="tabpanel" tabindex="0">
-            <h2>Mercadorias Não Coletadas</h2>
-            <table aria-describedby="Tabela de mercadorias não coletadas">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Descrição</th>
-                        <th>Valor (R$)</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-naoColetados"></tbody>
-            </table>
-            <div style="text-align: center; margin-top: 20px;">
-                <button onclick="enviarMensagemNaoColetadosGeral()">Enviar Mensagem Geral (WhatsApp)</button>
-                <p>Telefones dos clientes com mercadorias não coletadas (para envio em massa): <span id="listaTelefonesNaoColetados"></span></p>
-            </div>
-        </div>
-
-        <div id="caixa" class="hidden" role="tabpanel" tabindex="0">
-            <h2>Resumo da Semana</h2>
-            <p>Total Bruto: <strong>R$ <span id="totalBruto"></span></strong></p>
-            <p>Emergenciais (R$10,00 por coleta): <strong>R$ <span id="emergencialTotal"></span></strong></p>
-            <p>Subtotal (com taxa emergencial): <strong>R$ <span id="subtotal"></span></strong></p>
-            <p>Comissão (22%): <strong>R$ <span id="comissao"></span></strong></p>
-
-            <div class="resumo-extra">
-                <p>Total Caixa (troco): <strong id="caixaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('caixa')">+ Detalhes</button></p>
-                <div id="detalhesCaixa" class="detalhes-container hidden">
-                    <h4>Detalhes do Caixa (troco)</h4>
-                    <ul id="listaDetalhesCaixa"></ul>
-                </div>
-
-                <p>Total Gasolina: <strong id="gasolinaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('gasolina')">+ Detalhes</button></p>
-                <div id="detalhesGasolina" class="detalhes-container hidden">
-                    <h4>Detalhes da Gasolina</h4>
-                    <ul id="listaDetalhesGasolina"></ul>
-                </div>
-            </div>
-
-            <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
-
-            <div class="caixa-gasolina-container">
-                <div class="info-card caixa">
-                    <h3>💰 Lançar Caixa (troco)</h3>
-                    <input type="number" id="inputCaixaValor" placeholder="Valor (R$)" min="0" step="0.01">
-                    <input type="date" id="inputCaixaData">
-                    <button onclick="salvarCaixa()">Salvar Caixa</button>
-                </div>
-
-                <div class="info-card gasolina">
-                    <h3>⛽ Lançar Gasolina</h3>
-                    <input type="number" id="inputGasolinaValor" placeholder="Valor (R$)" min="0" step="0.01">
-                    <input type="date" id="inputGasolinaData">
-                    <button onclick="salvarGasolina()">Salvar Gasolina</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="registros" class="hidden" role="tabpanel" tabindex="0">
-            <h2>Histórico de Registros</h2>
-            <div class="filtro-container">
-                <label for="filtroDataInicio" class="filtro-item">
-                    <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
-                </label>
-                <label for="filtroDataFim" class="filtro-item">
-                    <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
-                </label>
-                <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
-            </div>
-            
-            <div class="botoes-historico-container">
-                <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
-                <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
-                <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
-            </div>
-            
-            <div id="historico"></div>
-
-            <h3 style="margin-top: 40px;">Coletas Atuais</h3>
-            <table aria-describedby="Tabela de entregas principal">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Descrição</th>
-                        <th>Valor (R$)</th>
-                        <th>Pagamento</th>
-                        <th>Pago</th>
-                        <th>Coletado</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-principal"></tbody>
-            </table>
+        <p>Total Gasolina: <strong id="gasolinaResumoTotal">R$ 0,00</strong> <button class="small" onclick="toggleDetalhes('gasolina')">+ Detalhes</button></p>
+        <div id="detalhesGasolina" class="detalhes-container hidden">
+            <h4>Detalhes da Gasolina</h4>
+            <ul id="listaDetalhesGasolina"></ul>
         </div>
     </div>
-</body>
 
+    <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+
+    <div class="caixa-gasolina-container">
+        <div class="info-card caixa">
+            <h3>💰 Lançar Caixa (troco)</h3>
+            <input type="number" id="inputCaixaValor" placeholder="Valor (R$)" min="0" step="0.01">
+            <input type="date" id="inputCaixaData">
+            <button onclick="salvarCaixa()">Salvar Caixa</button>
+        </div>
+
+        <div class="info-card gasolina">
+            <h3>⛽ Lançar Gasolina</h3>
+            <input type="number" id="inputGasolinaValor" placeholder="Valor (R$)" min="0" step="0.01">
+            <input type="date" id="inputGasolinaData">
+            <button onclick="salvarGasolina()">Salvar Gasolina</button>
+        </div>
+    </div>
+</div>
+
+        <div id="registros" class="hidden" role="tabpanel" tabindex="0">
+    <h2>Histórico de Registros</h2>
+    <div class="filtro-container">
+        <label for="filtroDataInicio" class="filtro-item">
+            <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
+        </label>
+        <label for="filtroDataFim" class="filtro-item">
+            <span>Data Fim:</span> <input type="date" id="filtroDataFim" aria-label="Filtro data fim" />
+        </label>
+        <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
+    </div>
+    
+    <div class="botoes-historico-container">
+        <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
+        <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
+        <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
+    </div>
+    
+    <div class="tabela-responsiva-container">
+        <table aria-describedby="Tabela de histórico de registros">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selecionarTodosHistorico" onclick="toggleAllHistorico(this)" aria-label="Selecionar todos" /></th> <th>Nome</th>
+                    <th>Telefone</th> <th>Descrição</th> <th>Valor (R$)</th>
+                    <th>Pagamento</th> <th>Pago</th>
+                    <th>Coletado</th>
+                    <th>Data</th>
+                    <th>Ações</th> </tr>
+            </thead>
+            <tbody id="tabela-historico">
+                </tbody>
+        </table>
+    </div>
+
+    <h3 style="margin-top: 40px;">Coletas Atuais</h3>
+    <div class="tabela-responsiva-container"> <table aria-describedby="Tabela de entregas principal">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Pagamento</th>
+                    <th>Pago</th>
+                    <th>Coletado</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-principal"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="contatos" class="page hidden" role="tabpanel"> <h2>Gerenciar Contatos</h2>
+
+    <div class="form-container">
+        <h3>Adicionar Novo Contato</h3>
+        <input type="text" id="nomeContato" placeholder="Nome do Contato" required aria-label="Nome do Contato" />
+        <input type="tel" id="telefoneContato" placeholder="Telefone do Contato" required aria-label="Telefone do Contato" />
+        <button onclick="adicionarContato()">Adicionar Contato</button>
+        <button id="importarContatosBtn" style="display:none;" onclick="selecionarContatos()">Importar do Celular</button>
+    </div>
+
+    <h3>Meus Contatos Salvos</h3>
+    <div class="tabela-responsiva-container">
+        <table aria-describedby="Tabela de Contatos Salvos">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-contatos">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<datalist id="nomesContatos"></datalist>
+    </body>
 </html>
