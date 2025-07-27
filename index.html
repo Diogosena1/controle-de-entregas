@@ -470,7 +470,7 @@ function excluir(id) {
 }
 
 function fecharSemana() {
-    if (!confirm("Fechar a semana? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
+    if (!confirm("Fechar o dia? Esta ação irá limpar as entregas atuais e movê-las para o histórico.")) return;
 
     // Cria um resumo da semana antes de limpar os dados
     const resumoSemana = {
@@ -765,21 +765,18 @@ function calcularCaixa() {
 // ============== NOVAS FUNÇÕES PARA O HISTÓRICO EDITÁVEL ==============
 
 function aplicarFiltroHistorico() {
-    
     const inicio = document.getElementById("filtroDataInicio").value;
     const fim = document.getElementById("filtroDataFim").value;
-    const tabelaHistoricoBody = document.getElementById("tabela-historico"); // O tbody que adicionamos no HTML
-    tabelaHistoricoBody.innerHTML = "";
+    const tabelaHistoricoBody = document.getElementById("tabela-historico");
+    tabelaHistoricoBody.innerHTML = ""; // Limpa a tabela antes de preencher
 
-    // Certifica-se que 'historico' está carregado corretamente
     historico = JSON.parse(localStorage.getItem("historico") || "[]");
 
-    // Filtrar os registros
     let resultadosFiltrados = historico.filter(registro => {
-        const dataRegistroStr = registro.dataOrdenacao || (registro.data ? registro.data.split(' ')[0].split('/').reverse().join('-') : ''); // Tenta pegar dataOrdenacao ou formatar de 'data'
+        const dataRegistroStr = registro.dataOrdenacao || (registro.data ? registro.data.split(' ')[0].split('/').reverse().join('-') : '');
         if (!dataRegistroStr) return false;
 
-        const dataRegistro = new Date(dataRegistroStr + 'T00:00:00'); // Garante que a comparação é de dia completo
+        const dataRegistro = new Date(dataRegistroStr + 'T00:00:00');
         const dataInicio = inicio ? new Date(inicio + 'T00:00:00') : null;
         const dataFim = fim ? new Date(fim + 'T23:59:59') : null;
 
@@ -793,74 +790,118 @@ function aplicarFiltroHistorico() {
         return inclui;
     });
 
-    // Armazena os registros filtrados para operações em massa (apagar filtrados)
     historicoFiltradoAtual = resultadosFiltrados;
+
+    // --- VARIÁVEIS PARA O RESUMO GERAL DO PERÍODO SELECIONADO ---
+    let totalColetasPeriodo = 0; // Soma dos valores das coletas individuais
+    let numEmergencialColetasPeriodo = 0; // Contagem de coletas emergenciais individuais
+    const valorDeducaoEmergencialPorColeta = 10; // R$10,00 por coleta emergencial
+
+    // Ordena os resultados filtrados por data, do mais recente para o mais antigo
+    resultadosFiltrados.sort((a, b) => {
+        const dateA = new Date(a.dataOrdenacao || a.data);
+        const dateB = new Date(b.dataOrdenacao || b.data);
+        return dateB - dateA;
+    });
 
     if (resultadosFiltrados.length === 0) {
         tabelaHistoricoBody.innerHTML = `<tr><td colspan="10" style="text-align: center;">Nenhum registro encontrado para o período selecionado.</td></tr>`;
+        document.getElementById("resumo-historico").classList.add('hidden'); // Esconde o resumo se não houver dados
         return;
     }
 
-resultadosFiltrados.sort((a, b) => new Date(b.dataOrdenacao || b.data) - new Date(a.dataOrdenacao || a.data)); // Ordena por data mais recente
+    // Exibe os dados na tabela E calcula o resumo do período
+    resultadosFiltrados.forEach((entrega) => {
+        if (entrega.tipo === 'resumo') {
+            // Se for um objeto de resumo diário, apenas exibe-o
+            const dataResumo = formatarDataParaExibicao(entrega.data || '');
+            const datasCaixa = [...new Set(entrega.caixaDetalhado?.map(c => formatarDataParaExibicao(c.data)) || [])];
+            const datasGasolina = [...new Set(entrega.gasolinaDetalhado?.map(g => formatarDataParaExibicao(g.data)) || [])];
 
-    // Exibe os dados na tabela
-resultadosFiltrados.forEach((entrega) => {
-    if (entrega.tipo === 'resumo') {
-    const dataResumo = formatarDataParaExibicao(entrega.data || '');
+            tabelaHistoricoBody.innerHTML += `
+                <tr style="background-color: #f8f8f8;">
+                    <td colspan="10" style="text-align:left; font-size: 14px;">
+                        <strong>Resumo do Dia ${dataResumo}:</strong><br><br>
 
-    const datasCaixa = [...new Set(entrega.caixaDetalhado?.map(c => formatarDataParaExibicao(c.data)) || [])];
-    const datasGasolina = [...new Set(entrega.gasolinaDetalhado?.map(g => formatarDataParaExibicao(g.data)) || [])];
+                        <strong>Caixa:</strong> R$ ${entrega.caixaTotal?.toFixed(2).replace('.', ',') || '0,00'}
+                        <span style="color: #555;">(Datas: ${datasCaixa.join(', ') || '---'})</span><br>
 
-    tabelaHistoricoBody.innerHTML += `
-        <tr style="background-color: #f8f8f8;">
-            <td colspan="10" style="text-align:left; font-size: 14px;">
-                <strong>Resumo do Dia ${dataResumo}:</strong><br><br>
+                        <strong>Gasolina:</strong> R$ ${entrega.gasolinaTotal?.toFixed(2).replace('.', ',') || '0,00'}
+                        <span style="color: #555;">(Datas: ${datasGasolina.join(', ') || '---'})</span><br><br>
 
-                <strong>Caixa:</strong> R$ ${entrega.caixaTotal?.toFixed(2) || '0.00'}
-                <span style="color: #555;">(Datas: ${datasCaixa.join(', ') || '---'})</span><br>
+                        <strong>Resumo Financeiro:</strong><br>
+                        Total Bruto: R$ ${entrega.totalBruto?.toFixed(2).replace('.', ',') || '0,00'} |
+                        Emergenciais: R$ ${entrega.emergenciais?.toFixed(2).replace('.', ',') || '0,00'} |
+                        Subtotal: R$ ${entrega.subtotal?.toFixed(2).replace('.', ',') || '0,00'} |
+                        Comissão: R$ ${entrega.comissao?.toFixed(2).replace('.', ',') || '0,00'}
+                    </td>
+                </tr>
+            `;
+        } else {
+            // Se for uma entrega individual, exibe com inputs editáveis e a inclui no cálculo do resumo do período
+            const row = tabelaHistoricoBody.insertRow();
+            row.dataset.id = entrega.id;
+            row.classList.toggle('pago', entrega.pago);
+            row.classList.toggle('coletado', entrega.coletado);
 
-                <strong>Gasolina:</strong> R$ ${entrega.gasolinaTotal?.toFixed(2) || '0.00'}
-                <span style="color: #555;">(Datas: ${datasGasolina.join(', ') || '---'})</span><br><br>
+            row.innerHTML = `
+                <td><input type="checkbox" class="historico-checkbox-individual" data-id="${entrega.id}" aria-label="Selecionar registro"></td>
+                <td><input type="text" class="historico-input historico-nome" value="${entrega.nome || ''}" disabled></td>
+                <td><input type="text" class="historico-input historico-telefone" value="${entrega.telefone || ''}" disabled></td>
+                <td><input type="text" class="historico-input historico-descricao" value="${entrega.descricao || ''}" disabled></td>
+                <td><input type="number" class="historico-input historico-valor" value="${entrega.valor.toFixed(2)}" step="0.01" disabled></td>
+                <td>
+                    <select class="historico-input historico-pagamento" disabled>
+                        <option value="">Selecione</option>
+                        <option value="PGA" ${entrega.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
+                        <option value="PGR" ${entrega.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
+                        <option value="PIX" ${entrega.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
+                    </select>
+                </td>
+                <td><input type="checkbox" class="historico-input historico-pago" ${entrega.pago ? 'checked' : ''} disabled></td>
+                <td><input type="checkbox" class="historico-input historico-coletado" ${entrega.coletado ? 'checked' : ''} disabled></td>
+                <td><input type="date" class="historico-input historico-data-edicao" value="${entrega.dataOrdenacao || ''}" disabled></td>
+                <td>
+                    <button class="small btn-toggle-historico" onclick="toggleEdicaoHistorico(this, '${entrega.id}')">Editar</button>
+                    <button class="small btn-excluir-historico" onclick="excluirRegistroHistorico('${entrega.id}')">X</button>
+                </td>
+            `;
 
-                <strong>Resumo Financeiro:</strong><br>
-                Total Bruto: R$ ${entrega.totalBruto?.toFixed(2) || '0.00'} |
-                Emergenciais: R$ ${entrega.emergenciais?.toFixed(2) || '0.00'} |
-                Subtotal: R$ ${entrega.subtotal?.toFixed(2) || '0.00'} |
-                Comissão: R$ ${entrega.comissao?.toFixed(2) || '0.00'}
-            </td>
-        </tr>
-    `;
-    return;
+            // Lógica para o resumo GERAL do PERÍODO:
+            totalColetasPeriodo += parseFloat(entrega.valor);
+
+            // Verifica se é uma coleta emergencial (por nome ou descrição)
+            if (entrega.nome.toLowerCase().includes('emergencial') || entrega.descricao.toLowerCase().includes('emergencial')) {
+                numEmergencialColetasPeriodo++;
+            }
+        }
+    });
+
+    // --- CÁLCULOS FINAIS PARA O RESUMO GERAL DO PERÍODO SELECIONADO ---
+    const deducaoEmergencial = numEmergencialColetasPeriodo * valorDeducaoEmergencialPorColeta;
+    const subtotal = totalColetasPeriodo - deducaoEmergencial;
+    const porcentagemMotorista = subtotal * 0.22; // 22% para o motorista
+
+    // --- ATUALIZA A SEÇÃO DE RESUMO NO HTML ---
+    document.getElementById("resumo-total-coletas").textContent = `R$ ${totalColetasPeriodo.toFixed(2).replace('.', ',')}`;
+    document.getElementById("resumo-emergencial-count").textContent = numEmergencialColetasPeriodo;
+    document.getElementById("resumo-emergencial-deducao").textContent = `R$ ${deducaoEmergencial.toFixed(2).replace('.', ',')}`;
+    document.getElementById("resumo-subtotal").textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+    document.getElementById("resumo-motorista-porcentagem").textContent = `R$ ${porcentagemMotorista.toFixed(2).replace('.', ',')}`;
+    
+    // Mostra a caixa de resumo se houver dados filtrados
+    const resumoHistoricoBox = document.getElementById("resumo-historico");
+    resumoHistoricoBox.classList.remove('hidden');
 }
 
-    // Registro normal (entrega)
-    tabelaHistoricoBody.innerHTML += `
-        <tr data-id="${entrega.id}">
-            <td><input type="checkbox" class="historico-checkbox-individual" data-id="${entrega.id}" aria-label="Selecionar registro"></td>
-            <td><input type="text" class="historico-input historico-nome" value="${entrega.nome || ''}" disabled></td>
-            <td><input type="text" class="historico-input historico-telefone" value="${entrega.telefone || ''}" disabled></td>
-            <td><input type="text" class="historico-input historico-descricao" value="${entrega.descricao || ''}" disabled></td>
-            <td><input type="number" class="historico-input historico-valor" value="${entrega.valor.toFixed(2)}" step="0.01" disabled></td>
-            <td>
-                <select class="historico-input historico-pagamento" disabled>
-                    <option value="">Selecione</option>
-                    <option value="PGA" ${entrega.pagamento === 'PGA' ? 'selected' : ''}>PGA</option>
-                    <option value="PGR" ${entrega.pagamento === 'PGR' ? 'selected' : ''}>PGR</option>
-                    <option value="PIX" ${entrega.pagamento === 'PIX' ? 'selected' : ''}>PIX</option>
-                </select>
-            </td>
-            <td><input type="checkbox" class="historico-input historico-pago" ${entrega.pago ? 'checked' : ''} disabled></td>
-            <td><input type="checkbox" class="historico-input historico-coletado" ${entrega.coletado ? 'checked' : ''} disabled></td>
-            <td><input type="date" class="historico-input historico-data-edicao" value="${entrega.dataOrdenacao || ''}" disabled></td>
-            <td>
-                <button class="small btn-toggle-historico" onclick="toggleEdicaoHistorico(this, '${entrega.id}')">Editar</button>
-                <button class="small btn-excluir-historico" onclick="excluirRegistroHistorico('${entrega.id}')">X</button>
-            </td>
-        </tr>
-    `;
-});
-
-    
+// Lembre-se de ter a função formatarDataParaExibicao se ainda não a tiver:
+function formatarDataParaExibicao(dataString) {
+    if (!dataString) return 'Data Inválida';
+    const partes = dataString.split('-');
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    return dataString; // Retorna original se não for o formato esperado
 }
 
 function toggleAllHistorico(checkbox) {
@@ -1133,7 +1174,7 @@ function marcarComoPago(id) {
                 </select>
                 <label for="pago" style="align-self: center;">Pago: <input type="checkbox" id="pago" aria-label="Pago" /></label>
                 <button onclick="adicionarEntrega()" aria-label="Adicionar entrega">Adicionar</button>
-                <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Semana</button>
+                <button onclick="fecharSemana()" aria-label="Fechar semana">Fechar Dia</button>
             </div>
         </div>
 
@@ -1265,6 +1306,8 @@ function marcarComoPago(id) {
         <div id="registros" class="hidden" role="tabpanel" tabindex="0">
     <h2>Histórico de Registros</h2>
     <div class="filtro-container">
+        <div class="filtro-container">
+        </div>
         <label for="filtroDataInicio" class="filtro-item">
             <span>Data Início:</span> <input type="date" id="filtroDataInicio" aria-label="Filtro data início" />
         </label>
@@ -1273,31 +1316,44 @@ function marcarComoPago(id) {
         </label>
         <button onclick="aplicarFiltroHistorico()" aria-label="Aplicar filtro">Aplicar Filtro</button>
     </div>
-    
+
     <div class="botoes-historico-container">
         <button onclick="apagarSelecionados()" aria-label="Apagar registros selecionados">Apagar Selecionados</button>
         <button onclick="apagarFiltrados()" aria-label="Apagar registros filtrados">Apagar Filtrados</button>
         <button onclick="apagarTodosHistorico()" aria-label="Apagar todos os registros">Apagar Todos</button>
     </div>
-    
+
+    <div id="resumo-historico" class="resumo-box hidden">
+        <h3>Resumo do Período Selecionado</h3>
+        <p>Total de Coletas: <span id="resumo-total-coletas">R$ 0,00</span></p>
+        <p>Coletas Emergenciais (R$10/unidade): <span id="resumo-emergencial-count">0</span> coletas (<span id="resumo-emergencial-deducao">R$ 0,00</span>)</p>
+        <p>Subtotal (Total - Emergencial): <span id="resumo-subtotal">R$ 0,00</span></p>
+        <p>Valor do Motorista (22% do Subtotal): <span id="resumo-motorista-porcentagem">R$ 0,00</span></p>
+    </div>
     <div class="tabela-responsiva-container">
         <table aria-describedby="Tabela de histórico de registros">
             <thead>
                 <tr>
-                    <th><input type="checkbox" id="selecionarTodosHistorico" onclick="toggleAllHistorico(this)" aria-label="Selecionar todos" /></th> <th>Nome</th>
-                    <th>Telefone</th> <th>Descrição</th> <th>Valor (R$)</th>
-                    <th>Pagamento</th> <th>Pago</th>
+                    <th><input type="checkbox" id="selecionarTodosHistorico" onclick="toggleAllHistorico(this)" aria-label="Selecionar todos" /></th>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Valor (R$)</th>
+                    <th>Pagamento</th>
+                    <th>Pago</th>
                     <th>Coletado</th>
                     <th>Data</th>
-                    <th>Ações</th> </tr>
+                    <th>Ações</th>
+                </tr>
             </thead>
             <tbody id="tabela-historico">
-                </tbody>
+            </tbody>
         </table>
     </div>
 
     <h3 style="margin-top: 40px;">Coletas Atuais</h3>
-    <div class="tabela-responsiva-container"> <table aria-describedby="Tabela de entregas principal">
+    <div class="tabela-responsiva-container">
+        <table aria-describedby="Tabela de entregas principal">
             <thead>
                 <tr>
                     <th>Nome</th>
